@@ -148,7 +148,7 @@ export function ContentStudioPage({
         hashtags: res.hashtags,
         status: 'draft',
         aiGenerated: true,
-        aiModel: 'gemini-4-hydrogen',
+        aiModel: res.modelUsed || 'gemini-4-hydrogen',
       });
 
       setSelectedId(id);

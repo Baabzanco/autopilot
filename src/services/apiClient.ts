@@ -80,6 +80,7 @@ export interface ContentGenerateResponse {
   hashtags: string[];
   slides: string[];
   tokens: { input: number; output: number; estimatedCostUsd: number };
+  modelUsed?: string;
 }
 
 export function generateContentDraft(params: {
@@ -106,6 +107,7 @@ export interface ContentRepurposeResponse {
     hashtags: string[];
   }>;
   tokens: { input: number; output: number; estimatedCostUsd: number };
+  modelUsed?: string;
 }
 
 export function repurposeContentDraft(params: {

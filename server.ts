@@ -5,7 +5,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -175,6 +175,117 @@ function getGeminiClient(): GoogleGenAI {
 }
 
 const GEMINI_MODEL = 'gemini-4-hydrogen';
+// Verified available models via ModelService.ListModels for resilient failover when gemini-4-hydrogen returns 503 UNAVAILABLE
+const GEMINI_MODEL_CASCADE = ['gemini-4-hydrogen', 'gemini-3.5-flash-lite', 'gemini-3.8-flash'] as const;
+const modelCooldownUntil = new Map<string, number>();
+
+function parseStructuredJsonText(rawText: string | undefined): Record<string, unknown> {
+  const trimmed = (rawText ?? '').trim();
+  if (!trimmed) return {};
+  const stripped = trimmed
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/\s*```$/i, '')
+    .trim();
+  return JSON.parse(stripped) as Record<string, unknown>;
+}
+
+async function generateStructuredJson(params: {
+  contents: string;
+  systemInstruction: string;
+  responseSchema: Record<string, unknown>;
+}): Promise<{
+  parsed: Record<string, unknown>;
+  tokens: { input: number; output: number; estimatedCostUsd: number };
+  modelUsed: string;
+}> {
+  const ai = getGeminiClient();
+  const now = Date.now();
+  let lastError: unknown = null;
+
+  const candidateModels = [
+    ...GEMINI_MODEL_CASCADE.filter((m) => (modelCooldownUntil.get(m) ?? 0) <= now),
+    ...GEMINI_MODEL_CASCADE.filter((m) => (modelCooldownUntil.get(m) ?? 0) > now),
+  ];
+
+  for (const modelName of candidateModels) {
+    const timeoutMs = modelName === 'gemini-4-hydrogen' ? 5500 : 25000;
+    const abortController = new AbortController();
+    const timer = setTimeout(() => abortController.abort(), timeoutMs);
+    try {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: params.contents,
+        config: {
+          systemInstruction: params.systemInstruction,
+          thinkingConfig: { thinkingLevel: ThinkingLevel.LOW },
+          responseMimeType: 'application/json',
+          responseSchema: params.responseSchema,
+          abortSignal: abortController.signal,
+        },
+      });
+      clearTimeout(timer);
+      const parsed = parseStructuredJsonText(response.text);
+      return {
+        parsed,
+        tokens: calculateTokenStats(response.usageMetadata),
+        modelUsed: modelName,
+      };
+    } catch (err: unknown) {
+      clearTimeout(timer);
+      lastError = err;
+      const status = typeof (err as { status?: number })?.status === 'number' ? (err as { status: number }).status : 0;
+      const errMsg = err instanceof Error ? err.message : String(err);
+      const isTransientOrTimeout =
+        status === 503 ||
+        status === 429 ||
+        status === 500 ||
+        status === 504 ||
+        errMsg.includes('UNAVAILABLE') ||
+        errMsg.includes('high demand') ||
+        errMsg.includes('AbortError') ||
+        errMsg.includes('aborted');
+
+      if (isTransientOrTimeout) {
+        // Put overloaded/slow model on a 90s cooldown so subsequent requests immediately route to healthy fallback
+        modelCooldownUntil.set(modelName, Date.now() + 90_000);
+        console.warn(`Model ${modelName} transient/timeout (${status || 'timeout'}), falling back to next verified model.`);
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw lastError ?? new Error('ALL_MODELS_UNAVAILABLE');
+}
+
+function sendGeminiErrorResponse(res: Response, err: unknown, defaultFaMessage: string) {
+  const status = typeof (err as { status?: number })?.status === 'number' ? (err as { status: number }).status : 500;
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error('Gemini endpoint error:', { status, message: msg.slice(0, 300) });
+
+  if (msg === 'GEMINI_API_KEY_MISSING') {
+    res.status(503).json({
+      error: 'کلید سرویس هوش مصنوعی (GEMINI_API_KEY) در محیط سرور تنظیم نشده است.',
+      code: 'GEMINI_API_KEY_MISSING',
+    });
+    return;
+  }
+  if (status === 503 || msg.includes('UNAVAILABLE') || msg.includes('high demand')) {
+    res.status(503).json({
+      error: 'سرویس هوش مصنوعی در حال حاضر با ترافیک بالا روبه‌رو است. لطفاً چند ثانیه دیگر دوباره تلاش کنید.',
+      code: 'MODEL_OVERLOADED',
+    });
+    return;
+  }
+  if (status === 429 || msg.includes('RESOURCE_EXHAUSTED') || msg.includes('quota')) {
+    res.status(429).json({
+      error: 'سهمیه درخواست‌های سرویس هوش مصنوعی موقتاً تکمیل شده است. لطفاً کمی بعد تلاش کنید.',
+      code: 'QUOTA_EXCEEDED',
+    });
+    return;
+  }
+  res.status(500).json({ error: defaultFaMessage, code: 'AI_GENERATION_FAILED' });
+}
 
 function calculateTokenStats(usage?: { promptTokenCount?: number; candidatesTokenCount?: number }) {
   const input = usage?.promptTokenCount ?? 0;
@@ -252,7 +363,7 @@ async function startServer() {
   });
 
   app.get('/api/v1/health', (_req: Request, res: Response) => {
-    res.json({ ok: true, model: GEMINI_MODEL });
+    res.json({ ok: true, model: GEMINI_MODEL, fallbackModels: GEMINI_MODEL_CASCADE });
   });
 
   // Cryptographic Approval & Integration Gate Verification Endpoint (Tests D, E, F, G)
@@ -356,47 +467,39 @@ async function startServer() {
       const business = req.body?.business as Record<string, unknown> | undefined;
       if (!verifyBusinessOwnership(req, res, business)) return;
 
-      const ai = getGeminiClient();
       const context = formatBusinessContext(business);
-
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: `بر اساس اطلاعات ثبت‌شده زیر، یک خلاصه استراتژیک روشن برای پروفایل کسب‌وکار این تولیدکننده محتوا بنویس، فرصت‌های کلیدی را مشخص کن و برنامه عملیاتی هفته اول را پیشنهاد بده.\n\n${context}`,
-        config: {
-          systemInstruction: `تو مدیر ارشد هوش مصنوعی در پلتفرم MicroBusiness Autopilot هستی.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              summary: { type: Type.STRING, description: 'خلاصه جامع و دقیق پروفایل کسب‌وکار به فارسی' },
-              keyOpportunities: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: '۳ تا ۵ فرصت کلیدی رشد بر اساس اطلاعات ورودی',
-              },
-              recommendedFirstWeekPlan: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: '۴ اقدام پیشنهادی برای هفته اول',
-              },
+        systemInstruction: `تو مدیر ارشد هوش مصنوعی در پلتفرم MicroBusiness Autopilot هستی.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            summary: { type: Type.STRING, description: 'خلاصه جامع و دقیق پروفایل کسب‌وکار به فارسی' },
+            keyOpportunities: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: '۳ تا ۵ فرصت کلیدی رشد بر اساس اطلاعات ورودی',
             },
-            required: ['summary', 'keyOpportunities', 'recommendedFirstWeekPlan'],
+            recommendedFirstWeekPlan: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: '۴ اقدام پیشنهادی برای هفته اول',
+            },
           },
+          required: ['summary', 'keyOpportunities', 'recommendedFirstWeekPlan'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
-      const tokens = calculateTokenStats(response.usageMetadata);
       res.json({
-        summary: parsed.summary || '',
-        keyOpportunities: parsed.keyOpportunities || [],
-        recommendedFirstWeekPlan: parsed.recommendedFirstWeekPlan || [],
+        summary: (parsed.summary as string) || '',
+        keyOpportunities: Array.isArray(parsed.keyOpportunities) ? parsed.keyOpportunities : [],
+        recommendedFirstWeekPlan: Array.isArray(parsed.recommendedFirstWeekPlan) ? parsed.recommendedFirstWeekPlan : [],
         tokensUsed: tokens.input + tokens.output,
         estimatedCostUsd: tokens.estimatedCostUsd,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Onboarding summary error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در تولید خلاصه استراتژیک کسب‌وکار. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در تولید خلاصه استراتژیک کسب‌وکار. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -418,7 +521,6 @@ async function startServer() {
       }
       if (!validateInputLength(message, 8000, 'پیام کاربر', res)) return;
 
-      const ai = getGeminiClient();
       const memoryText = (memoryItems ?? [])
         .slice(0, 12)
         .map((m) => `- [${m.verifiedByOwner ? 'تأییدشده' : 'پیشنهاد AI'}] ${String(m.title).slice(0, 120)}: ${String(m.content).slice(0, 400)}`)
@@ -437,66 +539,63 @@ async function startServer() {
         tasksText ? `\nآخرین وظایف:\n${tasksText}` : '',
       ].join('\n');
 
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: prompt,
-        config: {
-          systemInstruction: `تو «مدیر ارشد هوش مصنوعی» هستی. درخواست کاربر را تحلیل کن، با تکیه بر داده‌های واقعی پاسخ بده، مشخص کن کدام بخش مبتنی بر داده واقعی و کدام بخش پیشنهاد تحلیلی است، و مناسب‌ترین ایجنت تخصصی را برای ادامه کار پیشنهاد کن.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              reply: { type: Type.STRING, description: 'پاسخ کامل، کاربردی و شفاف به فارسی' },
-              factsUsed: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'داده‌های واقعی استفاده‌شده از پروفایل و آمار سیستم',
-              },
-              assumptionsAndRecommendations: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'فرض‌ها یا پیشنهادهای استراتژیک AI',
-              },
-              suggestedTaskTitle: { type: Type.STRING, description: 'عنوان یک وظیفه پیشنهادی کوتاه برای پیگیری' },
-              recommendedAgentType: {
-                type: Type.STRING,
-                description: 'یکی از: chief_manager, content, research_growth, sales_monetization, customer_relationship',
-              },
-              requiresApproval: {
-                type: Type.BOOLEAN,
-                description: 'آیا اجرای نهایی این موضوع نیازمند تأیید انسانی در مرکز تأییدها است؟',
-              },
+        systemInstruction: `تو «مدیر ارشد هوش مصنوعی» هستی. درخواست کاربر را تحلیل کن، با تکیه بر داده‌های واقعی پاسخ بده، مشخص کن کدام بخش مبتنی بر داده واقعی و کدام بخش پیشنهاد تحلیلی است، و مناسب‌ترین ایجنت تخصصی را برای ادامه کار پیشنهاد کن.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            reply: { type: Type.STRING, description: 'پاسخ کامل، کاربردی و شفاف به فارسی' },
+            factsUsed: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: 'داده‌های واقعی استفاده‌شده از پروفایل و آمار سیستم',
             },
-            required: [
-              'reply',
-              'factsUsed',
-              'assumptionsAndRecommendations',
-              'suggestedTaskTitle',
-              'recommendedAgentType',
-              'requiresApproval',
-            ],
+            assumptionsAndRecommendations: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: 'فرض‌ها یا پیشنهادهای استراتژیک AI',
+            },
+            suggestedTaskTitle: { type: Type.STRING, description: 'عنوان یک وظیفه پیشنهادی کوتاه برای پیگیری' },
+            recommendedAgentType: {
+              type: Type.STRING,
+              description: 'یکی از: chief_manager, content, research_growth, sales_monetization, customer_relationship',
+            },
+            requiresApproval: {
+              type: Type.BOOLEAN,
+              description: 'آیا اجرای نهایی این موضوع نیازمند تأیید انسانی در مرکز تأییدها است؟',
+            },
           },
+          required: [
+            'reply',
+            'factsUsed',
+            'assumptionsAndRecommendations',
+            'suggestedTaskTitle',
+            'recommendedAgentType',
+            'requiresApproval',
+          ],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       const validAgents = ['chief_manager', 'content', 'research_growth', 'sales_monetization', 'customer_relationship'];
-      const recommendedAgentType = validAgents.includes(parsed.recommendedAgentType)
+      const recommendedAgentType = validAgents.includes(String(parsed.recommendedAgentType))
         ? parsed.recommendedAgentType
         : 'chief_manager';
 
       res.json({
-        reply: parsed.reply || '',
-        factsUsed: parsed.factsUsed || [],
-        assumptionsAndRecommendations: parsed.assumptionsAndRecommendations || [],
-        suggestedTaskTitle: parsed.suggestedTaskTitle || 'پیگیری درخواست مدیر هوشمند',
+        reply: (parsed.reply as string) || '',
+        factsUsed: Array.isArray(parsed.factsUsed) ? parsed.factsUsed : [],
+        assumptionsAndRecommendations: Array.isArray(parsed.assumptionsAndRecommendations)
+          ? parsed.assumptionsAndRecommendations
+          : [],
+        suggestedTaskTitle: (parsed.suggestedTaskTitle as string) || 'پیگیری درخواست مدیر هوشمند',
         recommendedAgentType,
         requiresApproval: Boolean(parsed.requiresApproval),
-        tokens: calculateTokenStats(response.usageMetadata),
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Manager chat error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در ارتباط با مدیر هوشمند. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در ارتباط با مدیر هوشمند. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -520,7 +619,6 @@ async function startServer() {
       }
       if (!validateInputLength(prompt, 10000, 'شرح وظیفه', res)) return;
 
-      const ai = getGeminiClient();
       const roleInstructions: Record<string, string> = {
         chief_manager: 'هماهنگ‌کننده استراتژیک: برنامه اقدام مرحله‌ای، اولویت‌بندی و تفکیک وظایف ارائه بده.',
         content: 'متخصص تولید محتوا: ایده‌ها، قلاب‌های جذاب، کپشن و ساختار محتوا با لحن برند و نیم‌فاصله دقیق بنویس.',
@@ -538,54 +636,49 @@ async function startServer() {
         `\nداده‌های فعلی کسب‌وکار:\n${JSON.stringify(contextSnapshot ?? {}, null, 2)}`,
       ].join('\n');
 
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: fullPrompt,
-        config: {
-          systemInstruction: `${roleInstructions[agentType] || roleInstructions.chief_manager}\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              summary: { type: Type.STRING, description: 'خروجی اصلی و جمع‌بندی وظیفه' },
-              deliverables: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    title: { type: Type.STRING },
-                    detail: { type: Type.STRING },
-                  },
-                  required: ['title', 'detail'],
+        systemInstruction: `${roleInstructions[agentType] || roleInstructions.chief_manager}\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            summary: { type: Type.STRING, description: 'خروجی اصلی و جمع‌بندی وظیفه' },
+            deliverables: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  title: { type: Type.STRING },
+                  detail: { type: Type.STRING },
                 },
-                description: 'بخش‌های ساختاریافته نتیجه کار',
+                required: ['title', 'detail'],
               },
-              requiresApproval: {
-                type: Type.BOOLEAN,
-                description: 'اگر خروجی شامل اقدام خارجی یا انتشار/ارسال پیام است true برگردان',
-              },
-              approvalCategory: { type: Type.STRING, description: 'نوع اقدام درخواستی در صورت نیاز به تأیید' },
-              approvalReason: { type: Type.STRING, description: 'دلیل نیاز به تأیید مالک' },
-              dataLimitations: { type: Type.STRING, description: 'محدودیت‌های داده یا مواردی که منبع بیرونی متصل نیست' },
+              description: 'بخش‌های ساختاریافته نتیجه کار',
             },
-            required: ['summary', 'deliverables', 'requiresApproval', 'dataLimitations'],
+            requiresApproval: {
+              type: Type.BOOLEAN,
+              description: 'اگر خروجی شامل اقدام خارجی یا انتشار/ارسال پیام است true برگردان',
+            },
+            approvalCategory: { type: Type.STRING, description: 'نوع اقدام درخواستی در صورت نیاز به تأیید' },
+            approvalReason: { type: Type.STRING, description: 'دلیل نیاز به تأیید مالک' },
+            dataLimitations: { type: Type.STRING, description: 'محدودیت‌های داده یا مواردی که منبع بیرونی متصل نیست' },
           },
+          required: ['summary', 'deliverables', 'requiresApproval', 'dataLimitations'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       res.json({
-        summary: parsed.summary || '',
-        deliverables: parsed.deliverables || [],
+        summary: (parsed.summary as string) || '',
+        deliverables: Array.isArray(parsed.deliverables) ? parsed.deliverables : [],
         requiresApproval: Boolean(parsed.requiresApproval),
         approvalCategory: parsed.approvalCategory,
         approvalReason: parsed.approvalReason,
-        dataLimitations: parsed.dataLimitations || '',
-        tokens: calculateTokenStats(response.usageMetadata),
+        dataLimitations: (parsed.dataLimitations as string) || '',
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Agent execution error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در اجرای وظیفه ایجنت. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در اجرای وظیفه ایجنت. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -610,7 +703,6 @@ async function startServer() {
       }
       if (!validateInputLength(promptInput, 10000, 'ورودی تولید محتوا', res)) return;
 
-      const ai = getGeminiClient();
       const targetLangLabel = language === 'en' ? 'انگلیسی حرفه‌ای' : language === 'ar' ? 'عربی استاندارد' : 'فارسی معیار و خوانا با نیم‌فاصله دقیق';
 
       const prompt = [
@@ -624,48 +716,43 @@ async function startServer() {
         `\nزمینه برند و مخاطبان:\n${formatBusinessContext(business)}`,
       ].join('\n');
 
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: prompt,
-        config: {
-          systemInstruction: `تو ایجنت متخصص تولید محتوای شبکه‌های اجتماعی هستی. محتوای تولیدی باید دقیقاً متناسب با فرمت پلتفرم انتخاب‌شده، دارای قلاب قوی، دعوت به اقدام (CTA) روشن و هشتگ‌های مرتبط باشد.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING, description: 'عنوان کوتاه و گویا برای مدیریت محتوا' },
-              caption: { type: Type.STRING, description: 'متن کامل کپشن یا پست' },
-              script: { type: Type.STRING, description: 'سناریوی ویدیو یا متن اسلایدهای کاروسل (در صورت نیاز)' },
-              cta: { type: Type.STRING, description: 'فراخوان به اقدام (Call to Action)' },
-              hashtags: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: '۵ تا ۱۰ هشتگ مرتبط بدون علامت #',
-              },
-              slides: {
-                type: Type.ARRAY,
-                items: { type: Type.STRING },
-                description: 'متن پیشنهادی اسلایدها در صورت کاروسل بودن',
-              },
+        systemInstruction: `تو ایجنت متخصص تولید محتوای شبکه‌های اجتماعی هستی. محتوای تولیدی باید دقیقاً متناسب با فرمت پلتفرم انتخاب‌شده، دارای قلاب قوی، دعوت به اقدام (CTA) روشن و هشتگ‌های مرتبط باشد.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING, description: 'عنوان کوتاه و گویا برای مدیریت محتوا' },
+            caption: { type: Type.STRING, description: 'متن کامل کپشن یا پست' },
+            script: { type: Type.STRING, description: 'سناریوی ویدیو یا متن اسلایدهای کاروسل (در صورت نیاز)' },
+            cta: { type: Type.STRING, description: 'فراخوان به اقدام (Call to Action)' },
+            hashtags: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: '۵ تا ۱۰ هشتگ مرتبط بدون علامت #',
             },
-            required: ['title', 'caption', 'script', 'cta', 'hashtags', 'slides'],
+            slides: {
+              type: Type.ARRAY,
+              items: { type: Type.STRING },
+              description: 'متن پیشنهادی اسلایدها در صورت کاروسل بودن',
+            },
           },
+          required: ['title', 'caption', 'script', 'cta', 'hashtags', 'slides'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       res.json({
-        title: parsed.title || 'محتوای پیشنهادی',
-        caption: parsed.caption || '',
-        script: parsed.script || '',
-        cta: parsed.cta || '',
+        title: (parsed.title as string) || 'محتوای پیشنهادی',
+        caption: (parsed.caption as string) || '',
+        script: (parsed.script as string) || '',
+        cta: (parsed.cta as string) || '',
         hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [],
         slides: Array.isArray(parsed.slides) ? parsed.slides : [],
-        tokens: calculateTokenStats(response.usageMetadata),
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Content generate error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در تولید محتوا. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در تولید محتوا. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -684,7 +771,6 @@ async function startServer() {
         return;
       }
 
-      const ai = getGeminiClient();
       const prompt = [
         `محتوای اصلی را برای پلتفرم‌های زیر بازآفرینی کن (بدون تغییر اصل محتوا): ${targetPlatforms.slice(0, 6).join(', ')}`,
         `عنوان اصلی: ${String(original.title ?? '').slice(0, 300)}`,
@@ -694,45 +780,40 @@ async function startServer() {
         `\nزمینه برند:\n${formatBusinessContext(business)}`,
       ].join('\n');
 
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: prompt,
-        config: {
-          systemInstruction: `تو متخصص بازآفرینی محتوا (Content Repurposing) هستی. برای هر پلتفرم مقصد یک نسخه بومی‌سازی‌شده و استاندارد بساز.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              versions: {
-                type: Type.ARRAY,
-                items: {
-                  type: Type.OBJECT,
-                  properties: {
-                    platform: { type: Type.STRING },
-                    contentType: { type: Type.STRING, description: 'یکی از: post, carousel, reel_script, short_script, video_description, story, thread, newsletter' },
-                    title: { type: Type.STRING },
-                    caption: { type: Type.STRING },
-                    script: { type: Type.STRING },
-                    cta: { type: Type.STRING },
-                    hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
-                  },
-                  required: ['platform', 'contentType', 'title', 'caption', 'script', 'cta', 'hashtags'],
+        systemInstruction: `تو متخصص بازآفرینی محتوا (Content Repurposing) هستی. برای هر پلتفرم مقصد یک نسخه بومی‌سازی‌شده و استاندارد بساز.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            versions: {
+              type: Type.ARRAY,
+              items: {
+                type: Type.OBJECT,
+                properties: {
+                  platform: { type: Type.STRING },
+                  contentType: { type: Type.STRING, description: 'یکی از: post, carousel, reel_script, short_script, video_description, story, thread, newsletter' },
+                  title: { type: Type.STRING },
+                  caption: { type: Type.STRING },
+                  script: { type: Type.STRING },
+                  cta: { type: Type.STRING },
+                  hashtags: { type: Type.ARRAY, items: { type: Type.STRING } },
                 },
+                required: ['platform', 'contentType', 'title', 'caption', 'script', 'cta', 'hashtags'],
               },
             },
-            required: ['versions'],
           },
+          required: ['versions'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       res.json({
         versions: Array.isArray(parsed.versions) ? parsed.versions : [],
-        tokens: calculateTokenStats(response.usageMetadata),
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Repurpose error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در بازآفرینی محتوا. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در بازآفرینی محتوا. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -753,7 +834,6 @@ async function startServer() {
       }
       if (!validateInputLength(goalPrompt, 5000, 'هدف کمپین', res)) return;
 
-      const ai = getGeminiClient();
       const prompt = [
         `نوع کمپین: ${String(campaignType ?? '')}`,
         `هدف و توضیح کاربر: ${goalPrompt.trim()}`,
@@ -761,34 +841,29 @@ async function startServer() {
         `\nزمینه کسب‌وکار:\n${formatBusinessContext(business)}`,
       ].join('\n');
 
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: prompt,
-        config: {
-          systemInstruction: `تو ایجنت فروش و کمپین‌های بازاریابی هستی. یک طرح کمپین عملیاتی و شفاف آماده کن.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              name: { type: Type.STRING },
-              objective: { type: Type.STRING },
-              targetAudience: { type: Type.STRING },
-              keyMessages: { type: Type.ARRAY, items: { type: Type.STRING } },
-              launchChecklist: { type: Type.ARRAY, items: { type: Type.STRING } },
-            },
-            required: ['name', 'objective', 'targetAudience', 'keyMessages', 'launchChecklist'],
+        systemInstruction: `تو ایجنت فروش و کمپین‌های بازاریابی هستی. یک طرح کمپین عملیاتی و شفاف آماده کن.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            objective: { type: Type.STRING },
+            targetAudience: { type: Type.STRING },
+            keyMessages: { type: Type.ARRAY, items: { type: Type.STRING } },
+            launchChecklist: { type: Type.ARRAY, items: { type: Type.STRING } },
           },
+          required: ['name', 'objective', 'targetAudience', 'keyMessages', 'launchChecklist'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       res.json({
         ...parsed,
-        tokens: calculateTokenStats(response.usageMetadata),
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Campaign draft error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در طراحی کمپین. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در طراحی کمپین. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -803,41 +878,35 @@ async function startServer() {
 
       if (!verifyBusinessOwnership(req, res, business)) return;
 
-      const ai = getGeminiClient();
       const prompt = [
         `نوع گزارش: ${String(reportType ?? 'weekly')}`,
         `اطلاعات کسب‌وکار:\n${formatBusinessContext(business)}`,
         `\nداده‌های واقعی ثبت‌شده در پایگاه‌داده:\n${JSON.stringify(metricsSnapshot ?? {}, null, 2)}`,
       ].join('\n');
 
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: prompt,
-        config: {
-          systemInstruction: `تو تحلیل‌گر داده کسب‌وکار هستی. گزارش را منحصراً بر پایه اعداد واقعی داده‌شده بنویس. اگر داده‌های بیرونی شبکه‌های اجتماعی متصل نیستند، صراحتاً آن را به عنوان محدودیت داده ذکر کن و هرگز عددی را از خودت نساز.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              title: { type: Type.STRING },
-              summary: { type: Type.STRING, description: 'متن کامل گزارش تحلیلی به فارسی با بخش‌های شفاف' },
-              dataSourceNote: { type: Type.STRING, description: 'توضیح دقیق منابع داده و داده‌های متصل‌نشده' },
-            },
-            required: ['title', 'summary', 'dataSourceNote'],
+        systemInstruction: `تو تحلیل‌گر داده کسب‌وکار هستی. گزارش را منحصراً بر پایه اعداد واقعی داده‌شده بنویس. اگر داده‌های بیرونی شبکه‌های اجتماعی متصل نیستند، صراحتاً آن را به عنوان محدودیت داده ذکر کن و هرگز عددی را از خودت نساز.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING },
+            summary: { type: Type.STRING, description: 'متن کامل گزارش تحلیلی به فارسی با بخش‌های شفاف' },
+            dataSourceNote: { type: Type.STRING, description: 'توضیح دقیق منابع داده و داده‌های متصل‌نشده' },
           },
+          required: ['title', 'summary', 'dataSourceNote'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       res.json({
-        title: parsed.title || 'گزارش عملکرد کسب‌وکار',
-        summary: parsed.summary || '',
-        dataSourceNote: parsed.dataSourceNote || 'منبع: رکوردهای واقعی ثبت‌شده در پلتفرم',
-        tokens: calculateTokenStats(response.usageMetadata),
+        title: (parsed.title as string) || 'گزارش عملکرد کسب‌وکار',
+        summary: (parsed.summary as string) || '',
+        dataSourceNote: (parsed.dataSourceNote as string) || 'منبع: رکوردهای واقعی ثبت‌شده در پلتفرم',
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('Analytics report error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در تولید گزارش تحلیلی. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در تولید گزارش تحلیلی. لطفاً دوباره تلاش کنید.');
     }
   });
 
@@ -857,35 +926,29 @@ async function startServer() {
       }
       if (!validateInputLength(inquiry, 4000, 'پیام مشتری', res)) return;
 
-      const ai = getGeminiClient();
-      const response = await ai.models.generateContent({
-        model: GEMINI_MODEL,
+      const { parsed, tokens, modelUsed } = await generateStructuredJson({
         contents: `نام مخاطب/مشتری: ${String(customerName ?? '').slice(0, 150)}\nپیام یا نیاز ثبت‌شده: ${inquiry.trim()}\n\nاطلاعات کسب‌وکار:\n${formatBusinessContext(business)}`,
-        config: {
-          systemInstruction: `تو ایجنت ارتباط با مشتری هستی. یک پیش‌نویس پاسخ محترمانه، دقیق و متناسب با لحن برند بنویس. این پاسخ فقط پیش‌نویس است و ارسال آن نیازمند تأیید مالک است.\n${PERSIAN_WRITING_RULES}`,
-          responseMimeType: 'application/json',
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              subject: { type: Type.STRING },
-              replyDraft: { type: Type.STRING },
-              toneNote: { type: Type.STRING },
-            },
-            required: ['subject', 'replyDraft', 'toneNote'],
+        systemInstruction: `تو ایجنت ارتباط با مشتری هستی. یک پیش‌نویس پاسخ محترمانه، دقیق و متناسب با لحن برند بنویس. این پاسخ فقط پیش‌نویس است و ارسال آن نیازمند تأیید مالک است.\n${PERSIAN_WRITING_RULES}`,
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            subject: { type: Type.STRING },
+            replyDraft: { type: Type.STRING },
+            toneNote: { type: Type.STRING },
           },
+          required: ['subject', 'replyDraft', 'toneNote'],
         },
       });
 
-      const parsed = JSON.parse((response.text ?? '{}').trim());
       res.json({
-        subject: parsed.subject || `پاسخ به ${customerName}`,
-        replyDraft: parsed.replyDraft || '',
-        toneNote: parsed.toneNote || '',
-        tokens: calculateTokenStats(response.usageMetadata),
+        subject: (parsed.subject as string) || `پاسخ به ${customerName}`,
+        replyDraft: (parsed.replyDraft as string) || '',
+        toneNote: (parsed.toneNote as string) || '',
+        tokens,
+        modelUsed,
       });
     } catch (err) {
-      console.error('CRM draft reply error:', err instanceof Error ? err.message : 'Unknown error');
-      res.status(500).json({ error: 'خطا در نگارش پیش‌نویس پاسخ مشتری. لطفاً دوباره تلاش کنید.' });
+      sendGeminiErrorResponse(res, err, 'خطا در نگارش پیش‌نویس پاسخ مشتری. لطفاً دوباره تلاش کنید.');
     }
   });
 
