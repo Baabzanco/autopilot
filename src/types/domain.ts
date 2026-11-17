@@ -198,6 +198,7 @@ export type NavSection =
   | 'approvals'
   | 'memory'
   | 'integrations'
+  | 'ai_providers'
   | 'settings';
 
 export interface UserProfile {
@@ -557,3 +558,209 @@ export interface AiChatMessage {
   createdTaskId?: string;
   createdAt?: unknown;
 }
+
+export type AiProviderId = 'gemini' | 'openai' | 'fal' | 'replicate';
+
+export type AiCapability =
+  | 'text_generation'
+  | 'structured_json'
+  | 'image_generation'
+  | 'image_editing'
+  | 'image_variation'
+  | 'image_understanding'
+  | 'video_generation'
+  | 'text_to_speech'
+  | 'audio_generation'
+  | 'media_understanding'
+  | 'embeddings';
+
+export type AiConnectionStatus = 'untested' | 'connected' | 'error' | 'not_configured';
+export type AiAvailabilityStatus = 'available' | 'degraded' | 'unavailable' | 'disabled';
+export type AiPlatformCredentialPolicy = 'platform_only' | 'customer_optional' | 'customer_required';
+
+export interface AiProviderView {
+  id: AiProviderId;
+  name: string;
+  enabled: boolean;
+  priority: number;
+  timeoutMs: number;
+  maxRetries: number;
+  fallbackEnabled: boolean;
+  baseUrl: string;
+  credentialEnvVar: string;
+  connectionStatus: AiConnectionStatus;
+  lastTestedAt?: string;
+  lastLatencyMs?: number;
+  lastTestError?: string;
+  detectedModels?: string[];
+  lastImageTestAt?: string;
+  lastImageTestOk?: boolean;
+  lastImageTestModel?: string;
+  lastImageTestError?: string;
+  updatedAt: string;
+  hasStoredPlatformKey: boolean;
+  hasEnvPlatformKey: boolean;
+  hasCredential: boolean;
+  maskedCredential: string | null;
+  circuitOpenUntil?: number;
+}
+
+export interface AiModelSpecView {
+  id: string;
+  providerId: AiProviderId;
+  modelId: string;
+  displayName: string;
+  capabilities: AiCapability[];
+  inputFormats: string[];
+  outputFormats: string[];
+  maxInputSize: string;
+  maxOutputDurationSec: number | null;
+  pricingMetadata: {
+    unit: '1m_tokens' | 'image' | 'second' | '1k_chars';
+    inputCostUsd?: number;
+    outputCostUsd?: number;
+    unitCostUsd?: number;
+  };
+  availabilityStatus: AiAvailabilityStatus;
+  isDefaultForCapabilities: AiCapability[];
+  fallbackEligible: boolean;
+  priority: number;
+  requiresPaidKey?: boolean;
+  supportedAspectRatios?: string[];
+  resolutionOptions?: string[];
+  supportsNegativePrompt?: boolean;
+  supportsReferenceImage?: boolean;
+  supportsVariation?: boolean;
+  timeoutMs?: number;
+}
+
+export interface AiRoutingPolicyView {
+  credentialPolicy: AiPlatformCredentialPolicy;
+  allowBusinessFallbackToPlatform: boolean;
+  defaultCooldownMs: number;
+}
+
+export interface AiRequestLogView {
+  id: string;
+  requestId: string;
+  businessId: string;
+  ownerId: string;
+  capability: AiCapability;
+  providerId: AiProviderId;
+  modelId: string;
+  credentialSource: 'platform' | 'customer';
+  status: 'success' | 'fallback_success' | 'error';
+  fallbackUsed: boolean;
+  attemptedModels: string[];
+  latencyMs: number;
+  inputTokens: number;
+  outputTokens: number;
+  units: number;
+  estimatedCostUsd: number;
+  errorCode?: string;
+  errorMessage?: string;
+  isTest?: boolean;
+  createdAt: string;
+}
+
+export interface AiTelemetrySummaryView {
+  totalRequests: number;
+  successCount: number;
+  fallbackCount: number;
+  errorCount: number;
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalEstimatedCostUsd: number;
+  avgLatencyMs: number;
+  byProvider: Record<
+    string,
+    {
+      requests: number;
+      errors: number;
+      fallbacks: number;
+      estimatedCostUsd: number;
+      avgLatencyMs: number;
+    }
+  >;
+}
+
+export interface BusinessAiSettingsView {
+  businessId: string;
+  credentialMode: 'platform' | 'customer';
+  platformPolicy: AiPlatformCredentialPolicy;
+  preferredProviders: Partial<Record<AiCapability, AiProviderId>>;
+  preferredModels: Partial<Record<AiCapability, string>>;
+  customerKeys: Record<
+    AiProviderId,
+    {
+      configured: boolean;
+      maskedPreview: string | null;
+      updatedAt?: string;
+    }
+  >;
+  updatedAt: string;
+}
+
+export type ImageAspectRatio = '1:1' | '4:5' | '3:4' | '4:3' | '9:16' | '16:9';
+export type VisualFormatKey =
+  | 'story'
+  | 'reel_cover'
+  | 'square_post'
+  | 'portrait_post'
+  | 'carousel_slide'
+  | 'landscape_post';
+
+export type ImageJobStatus = 'queued' | 'generating' | 'processing' | 'saving' | 'completed' | 'failed';
+
+export interface StoredMediaAssetView {
+  id: string;
+  businessId: string;
+  ownerId: string;
+  contentId?: string;
+  parentMediaId?: string;
+  versionNumber: number;
+  fileName: string;
+  mimeType: string;
+  fileSize: number;
+  width: number;
+  height: number;
+  aspectRatio?: ImageAspectRatio;
+  purpose?: string;
+  prompt?: string;
+  negativePrompt?: string;
+  styleInstructions?: string;
+  providerId?: AiProviderId;
+  modelId?: string;
+  latencyMs?: number;
+  estimatedCostUsd?: number;
+  composed: boolean;
+  editMode?: string;
+  storageKey: string;
+  compactPreviewDataUrl?: string;
+  signedUrl: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ImageGenerationJobView {
+  jobId: string;
+  businessId: string;
+  ownerId: string;
+  status: ImageJobStatus;
+  requestedCount: number;
+  completedCount: number;
+  aspectRatio: ImageAspectRatio;
+  format?: string;
+  prompt: string;
+  providerId?: AiProviderId;
+  modelUsed?: string;
+  fallbackUsed?: boolean;
+  estimatedCostUsd?: number;
+  latencyMs?: number;
+  errorCode?: string;
+  errorMessage?: string;
+  assets: StoredMediaAssetView[];
+  createdAt: string;
+  updatedAt: string;
+}
+

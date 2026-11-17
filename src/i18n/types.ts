@@ -20,6 +20,7 @@ export interface TranslationDictionary {
     approvals: string;
     memory: string;
     integrations: string;
+    ai_providers: string;
     settings: string;
   };
   common: {

@@ -20,6 +20,7 @@ export const en: TranslationDictionary = {
     approvals: 'Approvals',
     memory: 'Business Memory',
     integrations: 'Integrations',
+    ai_providers: 'AI Providers',
     settings: 'Settings',
   },
   common: {

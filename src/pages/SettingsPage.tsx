@@ -1,11 +1,18 @@
-import React, { useState } from 'react';
-import { Building2, Check, Cpu, FileClock, Globe, Plus, Sparkles, User } from 'lucide-react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Building2, Check, Cpu, FileClock, Globe, KeyRound, Plus, Sparkles, Trash2, User, Zap } from 'lucide-react';
 import { useI18n } from '../i18n/I18nContext';
+import {
+  fetchBusinessAiSettings,
+  testBusinessProviderKey,
+  updateBusinessAiSettings,
+  type BusinessAiSettingsResponse,
+} from '../services/apiClient';
 import { logActivity, updateBusiness, updateUserProfile } from '../services/dataAccess';
 import { formatDigits, formatJalaliDateTime, formatNumber } from '../lib/localization';
 import type {
   ActivityLog,
   Agent,
+  AiProviderId,
   Business,
   CurrencyCode,
   LocaleCode,
@@ -14,7 +21,7 @@ import type {
 } from '../types/domain';
 import { ErrorState } from '../components/ui/Primitives';
 
-type SettingsTab = 'profile' | 'business' | 'audit' | 'plan';
+type SettingsTab = 'profile' | 'business' | 'ai_credentials' | 'audit' | 'plan';
 
 export function SettingsPage({
   userProfile,
@@ -72,6 +79,110 @@ export function SettingsPage({
 
   const totalTokens = agents.reduce((acc, a) => acc + (a.totalTokensUsed || 0), 0);
   const totalCost = agents.reduce((acc, a) => acc + (a.estimatedCostUsd || 0), 0);
+
+  // Business AI Credentials & Usage state
+  const [aiSettingsData, setAiSettingsData] = useState<BusinessAiSettingsResponse | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [customerKeyDrafts, setCustomerKeyDrafts] = useState<Record<string, string>>({});
+  const [testingPid, setTestingPid] = useState<string | null>(null);
+
+  const loadBusinessAi = useCallback(async () => {
+    setAiLoading(true);
+    try {
+      const res = await fetchBusinessAiSettings(business);
+      setAiSettingsData(res);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در دریافت تنظیمات هوش مصنوعی کسب‌وکار');
+    } finally {
+      setAiLoading(false);
+    }
+  }, [business]);
+
+  useEffect(() => {
+    if (tab === 'ai_credentials') {
+      void loadBusinessAi();
+    }
+  }, [tab, loadBusinessAi]);
+
+  const handleCredentialModeChange = async (mode: 'platform' | 'customer') => {
+    setSaving(true);
+    setError(null);
+    setSavedMsg(null);
+    try {
+      await updateBusinessAiSettings({ business, credentialMode: mode });
+      await loadBusinessAi();
+      setSavedMsg('حالت اعتبارنامه هوش مصنوعی کسب‌وکار به‌روزرسانی شد.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در تغییر حالت کلید API');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveCustomerKey = async (providerId: AiProviderId) => {
+    const raw = (customerKeyDrafts[providerId] || '').trim();
+    if (raw.length < 8) {
+      setError('کلید API باید حداقل ۸ کاراکتر معتبر داشته باشد.');
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setSavedMsg(null);
+    try {
+      await updateBusinessAiSettings({
+        business,
+        setCustomerKey: { providerId, apiKey: raw },
+      });
+      setCustomerKeyDrafts((prev) => ({ ...prev, [providerId]: '' }));
+      await loadBusinessAi();
+      setSavedMsg(`کلید اختصاصی ${providerId} با رمزنگاری AES-256 ذخیره شد.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در ذخیره کلید اختصاصی');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleRemoveCustomerKey = async (providerId: AiProviderId) => {
+    setSaving(true);
+    setError(null);
+    setSavedMsg(null);
+    try {
+      await updateBusinessAiSettings({
+        business,
+        removeCustomerKeyProvider: providerId,
+      });
+      await loadBusinessAi();
+      setSavedMsg(`کلید اختصاصی ${providerId} حذف شد.`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در حذف کلید اختصاصی');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleTestCustomerKey = async (providerId: AiProviderId) => {
+    setTestingPid(providerId);
+    setError(null);
+    setSavedMsg(null);
+    try {
+      const draft = (customerKeyDrafts[providerId] || '').trim();
+      const res = await testBusinessProviderKey({
+        business,
+        providerId,
+        ...(draft ? { apiKey: draft } : {}),
+      });
+      if (res.result.ok) {
+        setSavedMsg(`${res.result.message} (${formatDigits(res.result.latencyMs, numeralStyle)}ms)`);
+      } else {
+        setError(res.result.message);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'خطا در تست کلید اختصاصی');
+    } finally {
+      setTestingPid(null);
+    }
+  };
 
   const handleSaveUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,6 +279,7 @@ export function SettingsPage({
           [
             { id: 'profile', label: 'پروفایل و بومی‌سازی', icon: User },
             { id: 'business', label: 'تنظیمات کسب‌وکار و برند', icon: Building2 },
+            { id: 'ai_credentials', label: 'کلید و مصرف AI کسب‌وکار', icon: KeyRound },
             { id: 'audit', label: 'تاریخچه ممیزی (Audit Log)', icon: FileClock },
             { id: 'plan', label: 'اشتراک و مصرف هوش مصنوعی', icon: Cpu },
           ] as Array<{ id: SettingsTab; label: string; icon: React.ComponentType<{ className?: string }> }>
@@ -441,6 +553,154 @@ export function SettingsPage({
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {tab === 'ai_credentials' && (
+        <div className="space-y-6">
+          <div className="bg-[#151E33] border border-[#273449] rounded-xl p-6 space-y-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#273449] pb-3">
+              <div>
+                <h2 className="text-sm font-semibold text-[#F8FAFC]">منبع اعتبارنامه هوش مصنوعی (Credential Mode)</h2>
+                <p className="text-xs text-[#94A3B8] mt-1">
+                  انتخاب کنید درخواست‌های این کسب‌وکار از سهمیه مرکزی پلتفرم استفاده کنند یا کلیدهای API اختصاصی خودتان (رمزنگاری‌شده).
+                </p>
+              </div>
+              {aiSettingsData && (
+                <div className="text-xs text-[#94A3B8]">
+                  سیاست پلتفرم:{' '}
+                  <span className="text-[#F8FAFC] font-medium">
+                    {aiSettingsData.settings.platformPolicy === 'platform_only'
+                      ? 'فقط کلید پلتفرم'
+                      : aiSettingsData.settings.platformPolicy === 'customer_required'
+                      ? 'الزامی بودن کلید مشتری'
+                      : 'انتخاب آزاد کسب‌وکار'}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {aiLoading && !aiSettingsData ? (
+              <div className="text-xs text-[#94A3B8] py-4">در حال بارگذاری تنظیمات AI...</div>
+            ) : aiSettingsData ? (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    type="button"
+                    disabled={saving || aiSettingsData.settings.platformPolicy === 'customer_required'}
+                    onClick={() => void handleCredentialModeChange('platform')}
+                    className={`p-4 rounded-xl border text-right transition-colors cursor-pointer ${
+                      aiSettingsData.settings.credentialMode === 'platform'
+                        ? 'bg-[#6366F1]/15 border-[#6366F1] text-[#F8FAFC]'
+                        : 'bg-[#0B1020] border-[#273449] text-[#94A3B8]'
+                    }`}
+                  >
+                    <div className="text-xs font-bold">استفاده از سهمیه مرکزی پلتفرم (Platform)</div>
+                    <div className="text-[11px] opacity-80 mt-1">
+                      تمام مدل‌های فعال پلتفرم بدون نیاز به وارد کردن کلید شخصی در دسترس هستند.
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    disabled={saving || aiSettingsData.settings.platformPolicy === 'platform_only'}
+                    onClick={() => void handleCredentialModeChange('customer')}
+                    className={`p-4 rounded-xl border text-right transition-colors cursor-pointer ${
+                      aiSettingsData.settings.credentialMode === 'customer'
+                        ? 'bg-[#6366F1]/15 border-[#6366F1] text-[#F8FAFC]'
+                        : 'bg-[#0B1020] border-[#273449] text-[#94A3B8]'
+                    }`}
+                  >
+                    <div className="text-xs font-bold">استفاده از کلید API اختصاصی کسب‌وکار (BYOK)</div>
+                    <div className="text-[11px] opacity-80 mt-1">
+                      کلیدها فقط برای این کسب‌وکار به‌صورت AES-256-GCM رمزنگاری و ایزوله می‌شوند.
+                    </div>
+                  </button>
+                </div>
+
+                {aiSettingsData.settings.credentialMode === 'customer' && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+                    {(['gemini', 'openai', 'fal', 'replicate'] as AiProviderId[]).map((pid) => {
+                      const info = aiSettingsData.settings.customerKeys[pid];
+                      return (
+                        <div key={pid} className="bg-[#0B1020] border border-[#273449] rounded-xl p-4 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-[#F8FAFC]" dir="ltr">
+                              {pid.toUpperCase()}
+                            </span>
+                            <span className="text-[11px] font-mono text-[#94A3B8]" dir="ltr">
+                              {info?.configured ? info.maskedPreview : 'ثبت نشده'}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="password"
+                              dir="ltr"
+                              value={customerKeyDrafts[pid] || ''}
+                              onChange={(e) =>
+                                setCustomerKeyDrafts((prev) => ({ ...prev, [pid]: e.target.value }))
+                              }
+                              placeholder="کلید API اختصاصی..."
+                              className="flex-1 bg-[#151E33] border border-[#273449] rounded-lg px-2.5 py-1.5 text-xs text-left outline-none"
+                            />
+                            <button
+                              type="button"
+                              disabled={saving || !(customerKeyDrafts[pid] || '').trim()}
+                              onClick={() => void handleSaveCustomerKey(pid)}
+                              className="px-3 py-1.5 bg-[#6366F1] disabled:opacity-40 text-white text-xs rounded-lg whitespace-nowrap shrink-0 cursor-pointer"
+                            >
+                              ذخیره
+                            </button>
+                            <button
+                              type="button"
+                              disabled={testingPid === pid || (!info?.configured && !(customerKeyDrafts[pid] || '').trim())}
+                              onClick={() => void handleTestCustomerKey(pid)}
+                              className="p-1.5 bg-[#151E33] border border-[#273449] hover:border-[#6366F1] rounded-lg text-[#F8FAFC] shrink-0 cursor-pointer"
+                              title="تست کلید"
+                            >
+                              <Zap className="w-3.5 h-3.5" />
+                            </button>
+                            {info?.configured && (
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() => void handleRemoveCustomerKey(pid)}
+                                className="p-1.5 bg-[#151E33] border border-[#273449] text-[#EF4444] rounded-lg shrink-0 cursor-pointer"
+                                title="حذف کلید"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 border-t border-[#273449]">
+                  <div>
+                    <div className="text-[11px] text-[#94A3B8]">درخواست‌های ثبت‌شده این کسب‌وکار</div>
+                    <div className="text-base font-bold text-[#F8FAFC] tabular-nums mt-0.5">
+                      {formatNumber(aiSettingsData.telemetry.totalRequests, locale, numeralStyle)}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-[#94A3B8]">میانگین زمان پاسخ</div>
+                    <div className="text-base font-bold text-[#F8FAFC] tabular-nums mt-0.5" dir="ltr">
+                      {formatDigits(aiSettingsData.telemetry.avgLatencyMs, numeralStyle)} ms
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[11px] text-[#94A3B8]">هزینه تخمینی روتر AI</div>
+                    <div className="text-base font-bold text-[#F8FAFC] tabular-nums mt-0.5" dir="ltr">
+                      ${formatDigits(aiSettingsData.telemetry.totalEstimatedCostUsd.toFixed(5), numeralStyle)}
+                    </div>
+                  </div>
+                </div>
+              </>
+            ) : null}
+          </div>
         </div>
       )}
 

@@ -49,7 +49,9 @@ import { AnalyticsPage } from './pages/AnalyticsPage';
 import { AutomationsPage } from './pages/AutomationsPage';
 import { ApprovalsPage } from './pages/ApprovalsPage';
 import { BusinessMemoryPage } from './pages/BusinessMemoryPage';
+import { fetchAuthMe } from './services/apiClient';
 import { IntegrationsPage } from './pages/IntegrationsPage';
+import { AiProvidersAdminPage } from './pages/AiProvidersAdminPage';
 import { SettingsPage } from './pages/SettingsPage';
 
 function FirstWorkspacePrompt({
@@ -155,6 +157,7 @@ function AutopilotRoot() {
 
   const [activeNav, setActiveNav] = useState<NavSection>('overview');
   const [aiDrawerOpen, setAiDrawerOpen] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
 
   // Real-time subcollection states
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -219,7 +222,11 @@ function AutopilotRoot() {
       setAuthReady(true);
       if (user) {
         void loadUserWorkspace(user);
+        void fetchAuthMe()
+          .then((me) => setIsSuperAdmin(Boolean(me.isSuperAdmin)))
+          .catch(() => setIsSuperAdmin(false));
       } else {
+        setIsSuperAdmin(false);
         setUserProfile(null);
         setBusinesses([]);
         setActiveBusinessId(null);
@@ -416,6 +423,7 @@ function AutopilotRoot() {
       business={activeBusiness}
       userProfile={userProfile}
       pendingApprovalsCount={pendingApprovalsCount}
+      isSuperAdmin={isSuperAdmin}
       onOpenAiManager={() => setAiDrawerOpen(true)}
       onSignOut={() => void signOutUser()}
     >
@@ -451,6 +459,7 @@ function AutopilotRoot() {
           ownerId={firebaseUser.uid}
           content={content}
           mediaAssets={mediaAssets}
+          products={products}
         />
       )}
 
@@ -545,6 +554,10 @@ function AutopilotRoot() {
           ownerId={firebaseUser.uid}
           integrations={integrations}
         />
+      )}
+
+      {activeNav === 'ai_providers' && isSuperAdmin && (
+        <AiProvidersAdminPage business={activeBusiness} />
       )}
 
       {activeNav === 'settings' && (

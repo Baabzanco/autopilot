@@ -15,6 +15,7 @@ import {
   Package,
   Plug,
   Settings,
+  ShieldCheck,
   Users,
   Workflow,
   X,
@@ -29,7 +30,7 @@ interface NavItemConfig {
   icon: React.ComponentType<{ className?: string }>;
 }
 
-const NAV_ITEMS: NavItemConfig[] = [
+const BASE_NAV_ITEMS: NavItemConfig[] = [
   { id: 'overview', labelKey: 'overview', icon: LayoutDashboard },
   { id: 'workforce', labelKey: 'workforce', icon: Cpu },
   { id: 'content', labelKey: 'content', icon: FileText },
@@ -52,6 +53,7 @@ export function AppShell({
   business,
   userProfile,
   pendingApprovalsCount,
+  isSuperAdmin = false,
   onOpenAiManager,
   onSignOut,
   children,
@@ -61,6 +63,7 @@ export function AppShell({
   business: Business;
   userProfile: UserProfile;
   pendingApprovalsCount: number;
+  isSuperAdmin?: boolean;
   onOpenAiManager: () => void;
   onSignOut: () => void;
   children: React.ReactNode;
@@ -68,12 +71,20 @@ export function AppShell({
   const { t, dir } = useI18n();
   const [mobileOpen, setMobileOpen] = useState(false);
 
+  const navItems: NavItemConfig[] = isSuperAdmin
+    ? [
+        ...BASE_NAV_ITEMS.slice(0, -1),
+        { id: 'ai_providers', labelKey: 'ai_providers', icon: ShieldCheck },
+        BASE_NAV_ITEMS[BASE_NAV_ITEMS.length - 1],
+      ]
+    : BASE_NAV_ITEMS;
+
   const numeralStyle = business.numeralStyle || 'persian';
   const currentTitle = t.nav[activeNav];
 
   const renderNavList = () => (
     <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const Icon = item.icon;
         const active = activeNav === item.id;
         return (

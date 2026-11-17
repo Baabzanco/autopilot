@@ -20,6 +20,7 @@ export const fa: TranslationDictionary = {
     approvals: 'مرکز تأییدها',
     memory: 'حافظه کسب‌وکار',
     integrations: 'اتصال‌ها',
+    ai_providers: 'سرویس‌دهنده‌های AI',
     settings: 'تنظیمات',
   },
   common: {
