@@ -1,0 +1,2768 @@
+# PRODUCT REQUIREMENTS DOCUMENT (PRD)
+# MicroBusiness Autopilot – Creator Edition
+
+**Product Type:** AI-Powered SaaS / Creator Business Operating System  
+**Initial Target Market:** Social Media Creators  
+**Business Model:** Subscription-based SaaS  
+**Product Architecture:** All-in-One  
+**Agent Autonomy:** Fully Controlled / Human Approval Required  
+**Development Environment:** Google AI Studio – Build Mode  
+**Document Version:** 1.0  
+**Status:** Product Specification – Ready for Implementation
+
+---
+
+# 1. PRODUCT OVERVIEW
+
+## 1.1 Product Definition
+
+MicroBusiness Autopilot is an AI-powered operating system designed to help independent social media creators launch, manage, automate, and grow their creator businesses without requiring a traditional team.
+
+The platform provides an integrated workspace combining content production, social media management, audience growth, customer relationship management, digital product management, sales, analytics, and AI-powered task orchestration.
+
+The product operates through a coordinated team of specialized AI Agents supervised by a central AI Business Manager.
+
+The platform must not operate as a simple AI chatbot or content generator. It must function as a persistent business management system with real data, structured workflows, task tracking, integrations, and approval-based execution.
+
+## 1.2 Core Product Vision
+
+Enable one person to operate a professional creator business using an intelligent virtual team.
+
+**Core tagline:**
+
+Your Content. Your Business. Your AI Team.
+
+## 1.3 Primary Product Goals
+
+1. Reduce the operational workload of independent creators.
+2. Centralize creator business operations in one platform.
+3. Automate repetitive tasks while maintaining human control.
+4. Help creators consistently produce and distribute content.
+5. Convert social media audiences into customers.
+6. Provide measurable insights into business performance.
+7. Create a scalable subscription-based SaaS product.
+
+## 1.4 Initial Target Audience
+
+The initial product is designed for independent social media creators, including:
+
+- Instagram creators.
+- TikTok creators.
+- YouTube creators.
+- LinkedIn creators.
+- Personal brands.
+- Educational content creators.
+- Lifestyle and niche content creators.
+- Independent influencers.
+- Creators selling services or digital products.
+
+The first version should prioritize solo creators rather than agencies or large teams.
+
+## 1.5 Product Positioning
+
+MicroBusiness Autopilot is not primarily a social media scheduler.
+
+It is a creator business operating system that combines:
+
+- AI-powered business management.
+- Content creation and planning.
+- Social media workflow management.
+- Audience and customer management.
+- Sales and monetization.
+- Business analytics.
+- Controlled automation.
+
+---
+
+# 2. PRODUCT PRINCIPLES AND NON-NEGOTIABLE RULES
+
+The following principles must be respected throughout development.
+
+### 2.1 Human-Controlled AI
+
+All AI Agents operate under human supervision.
+
+AI may:
+- Research.
+- Analyze.
+- Generate content.
+- Prepare campaigns.
+- Recommend actions.
+- Create tasks.
+- Draft customer responses.
+- Prepare product descriptions.
+- Generate reports.
+
+AI must NEVER independently:
+- Publish content.
+- Send external messages.
+- Send marketing emails.
+- Change public product prices.
+- Launch advertising campaigns.
+- Spend money.
+- Issue refunds.
+- Delete business records.
+- Modify connected account settings.
+- Perform any external action that affects customers or public-facing business assets.
+
+Every external action requires explicit approval from the authorized account owner.
+
+Approval must be specific to the action, its content, its destination, and its relevant parameters.
+
+An approved action must not silently change after approval. If its content or parameters change, a new approval is required.
+
+### 2.2 Persistent Data
+
+All important information must be stored in a persistent database.
+
+Do not rely on browser state, local storage, or temporary AI conversation history as the primary source of business data.
+
+### 2.3 Multi-Tenant Architecture
+
+The application must support multiple independent users and businesses.
+
+Each user's data must be isolated.
+
+One user must never access another user's business data.
+
+### 2.4 Real Functionality
+
+Every visible button, form, action, and navigation item must perform its intended function.
+
+Do not create decorative buttons, fake integrations, simulated publishing, or fake analytics presented as real data.
+
+If an integration is not configured, show a clear disconnected or demo status.
+
+### 2.5 AI Transparency
+
+Every AI-generated result must be identifiable as AI-generated.
+
+Users must be able to:
+- Review.
+- Edit.
+- Reject.
+- Approve.
+- Regenerate.
+- Track the history of AI-generated work.
+
+### 2.6 No False Business Metrics
+
+Never display fabricated revenue, audience growth, follower counts, impressions, or engagement data as actual business performance.
+
+Use clearly labeled sample data only in demo mode.
+
+---
+
+# 3. USER ROLES AND ACCESS CONTROL
+
+## 3.1 Initial Roles
+
+### Business Owner
+
+The primary account holder.
+
+Permissions:
+- Full access to their business.
+- Create and edit business information.
+- Manage all AI Agents.
+- Review and approve AI-generated work.
+- Approve or reject external actions.
+- Manage connected accounts.
+- Manage products and customers.
+- Access analytics.
+- Manage billing and subscription.
+- Manage security settings.
+
+### Future Roles
+
+The architecture should support these future roles:
+
+- Admin.
+- Content Editor.
+- Social Media Manager.
+- Sales Manager.
+- Customer Support Representative.
+- Analyst.
+
+These roles are not required for the initial MVP but must be considered in database and permission design.
+
+## 3.2 Approval Policy
+
+The default approval policy is mandatory human approval.
+
+The owner can approve, reject, or request modifications.
+
+There is no automatic publishing mode in version 1.
+
+---
+
+# 4. INFORMATION ARCHITECTURE AND MAIN NAVIGATION
+
+The application must have a persistent sidebar navigation.
+
+Main navigation:
+
+1. Overview
+2. AI Workforce
+3. Content Studio
+4. Social Planner
+5. Media Library
+6. Audience & CRM
+7. Products & Offers
+8. Campaigns
+9. Analytics
+10. Automation Center
+11. Approvals
+12. Business Memory
+13. Integrations
+14. Settings
+
+The main dashboard must also include a persistent AI Business Manager interface.
+
+---
+
+# 5. CORE PRODUCT MODULES
+
+## 5.1 Overview Dashboard
+
+Purpose:
+
+Provide a unified overview of the creator's business.
+
+Dashboard components:
+
+### Business Summary
+
+Display:
+- Total published content.
+- Draft content.
+- Pending approvals.
+- Scheduled content.
+- Total audience, when supported by connected platform data.
+- Engagement metrics, when available.
+- Total tracked sales.
+- Revenue from connected sales sources.
+- Active campaigns.
+- Active tasks.
+
+All metrics must have a defined source and time period.
+
+### AI Workforce Summary
+
+Display:
+- Number of active Agents.
+- Current Agent tasks.
+- Completed tasks.
+- Failed tasks.
+- Tasks awaiting approval.
+- AI usage and estimated cost.
+
+### Content Performance
+
+Display:
+- Best-performing posts.
+- Recent posts.
+- Engagement trends.
+- Platform-specific performance.
+
+### Business Activity Feed
+
+Show chronological events:
+
+- New AI-generated content.
+- Content approved.
+- Content rejected.
+- Product created.
+- Customer added.
+- Campaign drafted.
+- Task completed.
+- Integration disconnected.
+- External action failed.
+
+### AI Business Manager Widget
+
+Provide a persistent conversational interface.
+
+Example questions:
+
+- What should I focus on today?
+- Which content performed best this week?
+- What content should I create next?
+- Which products should I promote?
+- Why did engagement decrease?
+- What tasks need my approval?
+
+The AI must answer using the user's actual business data when available.
+
+It must explicitly distinguish between actual data, estimated data, and recommendations.
+
+---
+
+## 5.2 Business Builder
+
+Purpose:
+
+Create the user's business profile and provide the context needed by all AI Agents.
+
+### Onboarding Workflow
+
+Step 1: Business Identity
+
+Fields:
+- Business name.
+- Creator name.
+- Business category.
+- Short description.
+- Website URL.
+- Business location.
+- Primary language.
+
+Step 2: Creator Profile
+
+Fields:
+- Main social platforms.
+- Creator niche.
+- Topics of expertise.
+- Experience level.
+- Target audience.
+- Preferred content formats.
+
+Step 3: Audience Definition
+
+Fields:
+- Target audience description.
+- Audience age range (optional).
+- Audience location.
+- Main audience interests.
+- Audience problems.
+- Audience goals.
+- Preferred language.
+
+Step 4: Brand Identity
+
+Fields:
+- Brand voice.
+- Communication style.
+- Brand personality.
+- Preferred terminology.
+- Words and expressions to avoid.
+- Brand colors.
+- Logo.
+- Brand assets.
+
+Step 5: Business Goals
+
+Fields:
+- Audience growth goals.
+- Content publishing goals.
+- Engagement goals.
+- Revenue goals.
+- Product sales goals.
+- Primary business objectives.
+
+Step 6: Monetization Model
+
+Options:
+- Sponsored content.
+- Affiliate marketing.
+- Digital products.
+- Online courses.
+- Consulting and services.
+- Paid communities.
+- Newsletter subscriptions.
+- Brand partnerships.
+
+Step 7: Review and Confirmation
+
+Generate a Business Profile Summary.
+
+The user must review and confirm it before it becomes the shared knowledge source for all Agents.
+
+### Acceptance Criteria
+
+- The user can complete onboarding.
+- Incomplete onboarding can be resumed.
+- Data is saved persistently.
+- The user can edit all business information later.
+- All Agents can access authorized business context.
+- No Agent can independently overwrite confirmed business settings.
+
+---
+
+## 5.3 AI Workforce
+
+Purpose:
+
+Manage the virtual team of AI Agents.
+
+### AI Manager
+
+The AI Manager is the central orchestration component.
+
+Responsibilities:
+- Understand business goals.
+- Interpret user requests.
+- Break complex requests into tasks.
+- Assign tasks to specialized Agents.
+- Track task progress.
+- Collect Agent results.
+- Identify conflicts.
+- Present consolidated recommendations.
+- Request owner approval before external actions.
+
+The AI Manager must not bypass approval policies.
+
+### Agent Management Interface
+
+Each Agent must have a dedicated profile containing:
+
+- Agent name.
+- Role.
+- Description.
+- Current status.
+- Assigned responsibilities.
+- Available tools.
+- Task history.
+- Performance indicators.
+- AI usage.
+- Last activity.
+- Configuration settings.
+
+Agent statuses:
+
+- Active.
+- Idle.
+- Working.
+- Waiting for Input.
+- Waiting for Approval.
+- Failed.
+- Disabled.
+
+The interface must allow the owner to enable or disable Agents.
+
+Disabling an Agent must prevent new tasks from being assigned to it.
+
+Existing tasks must remain visible and recoverable.
+
+---
+
+# 6. AI AGENT SPECIFICATIONS
+
+The first version must include five logical Agents.
+
+The architecture must allow additional specialist Agents to be introduced later.
+
+## 6.1 Chief AI Manager
+
+Role:
+
+Central business coordinator.
+
+Responsibilities:
+- Understand user instructions.
+- Access Business Memory.
+- Analyze business priorities.
+- Delegate tasks.
+- Coordinate specialist Agents.
+- Monitor task status.
+- Summarize results.
+- Prepare approval requests.
+
+Example:
+
+User: "Prepare next week's Instagram content plan."
+
+Expected workflow:
+
+1. Analyze the business profile.
+2. Review existing content.
+3. Ask Research Agent for relevant topic opportunities if necessary.
+4. Assign Content Agent to generate content ideas and drafts.
+5. Assign Growth Agent to recommend publishing times and content distribution strategy.
+6. Consolidate results.
+7. Present the plan for owner review.
+
+The Manager cannot publish or schedule content without approval.
+
+## 6.2 Content Agent
+
+Role:
+
+Content strategy and production.
+
+Responsibilities:
+- Generate content ideas.
+- Create content calendars.
+- Write captions.
+- Create post descriptions.
+- Write video scripts.
+- Generate hooks.
+- Create carousel slide copy.
+- Draft educational content.
+- Repurpose existing content.
+- Adapt content to platform-specific formats.
+- Maintain brand voice.
+
+Supported content formats:
+
+- Instagram posts.
+- Instagram carousels.
+- Instagram Reels scripts.
+- TikTok video scripts.
+- YouTube Shorts scripts.
+- YouTube video descriptions.
+- LinkedIn posts.
+- X posts.
+- Stories.
+- Newsletter drafts.
+
+Every content item must support:
+- Title.
+- Content type.
+- Platform.
+- Caption.
+- Hashtags.
+- Media references.
+- CTA.
+- Target audience.
+- Content objective.
+- Status.
+- AI generation history.
+
+## 6.3 Research & Growth Agent
+
+Role:
+
+Audience growth and market research.
+
+Responsibilities:
+- Research user-provided competitors.
+- Analyze user-provided content and performance data.
+- Identify content opportunities.
+- Suggest content topics.
+- Analyze audience interests.
+- Suggest growth strategies.
+- Recommend content experiments.
+- Identify potential collaborations.
+
+Research results must include:
+- Findings.
+- Supporting sources when external research is used.
+- Confidence level.
+- Recommendations.
+- Data limitations.
+
+The Agent must not fabricate external research or competitor metrics.
+
+## 6.4 Sales & Monetization Agent
+
+Role:
+
+Convert audience attention into business opportunities.
+
+Responsibilities:
+- Suggest monetization strategies.
+- Draft product descriptions.
+- Prepare promotional campaigns.
+- Recommend offers.
+- Generate landing page copy.
+- Analyze tracked sales.
+- Identify possible upselling opportunities.
+- Prepare customer follow-up messages.
+
+All promotional messages require owner approval before sending.
+
+## 6.5 Customer Relationship Agent
+
+Role:
+
+Customer relationship management.
+
+Responsibilities:
+- Organize customer records.
+- Categorize customer inquiries.
+- Draft customer support replies.
+- Summarize conversation history.
+- Identify common questions.
+- Prepare follow-up suggestions.
+- Analyze customer feedback.
+
+The Agent must never send a customer message independently.
+
+### Future Agents
+
+The following Agents may be added in later releases:
+
+- Brand Guardian Agent.
+- Video Production Agent.
+- Community Manager Agent.
+- Partnership Agent.
+- Finance & Revenue Agent.
+- Competitor Intelligence Agent.
+
+---
+
+# 7. AGENT ORCHESTRATION AND TASK MANAGEMENT
+
+## 7.1 Task Lifecycle
+
+Every Agent task must follow a persistent lifecycle:
+
+1. Created.
+2. Assigned.
+3. In Progress.
+4. Awaiting Input.
+5. Awaiting Approval.
+6. Approved.
+7. Rejected.
+8. Completed.
+9. Failed.
+10. Cancelled.
+
+Not every task requires approval.
+
+Internal research and drafting tasks can complete without approval.
+
+Any task that initiates an external action must enter Awaiting Approval.
+
+## 7.2 Task Object
+
+Every task must contain:
+
+- Task ID.
+- Business ID.
+- Task title.
+- Task description.
+- Assigned Agent.
+- Priority.
+- Status.
+- Input data.
+- Output data.
+- Related entity.
+- Creation date.
+- Start date.
+- Completion date.
+- Error details.
+- Estimated AI cost.
+- Approval requirement.
+
+## 7.3 Agent Execution Rules
+
+- Agents must only use authorized tools.
+- Agents must not execute arbitrary code.
+- Agents must not access other users' data.
+- Agents must not expose secrets.
+- Agents must respect rate limits.
+- Agent outputs must be validated before saving.
+- Failed tasks must be logged.
+- Retry operations must be controlled.
+- The same external action must not execute twice because of retries.
+
+## 7.4 Approval Workflow
+
+Each approval request must include:
+
+- Requested action.
+- Agent requesting approval.
+- Exact content or payload.
+- Target platform or recipient.
+- Related business object.
+- Relevant parameters.
+- Request creation time.
+- Approval status.
+
+Available actions:
+
+- Approve.
+- Reject.
+- Edit and Request New Approval.
+
+After approval:
+- Record the owner's identity.
+- Record the approved payload.
+- Record the approval timestamp.
+- Execute only the approved payload.
+- Save the execution result.
+
+If the execution fails, show Failed status rather than claiming success.
+
+---
+
+# 8. CONTENT STUDIO
+
+Purpose:
+
+Provide a complete environment for content planning, creation, editing, and management.
+
+## 8.1 Content Dashboard
+
+Display:
+- Total content items.
+- Drafts.
+- Pending review.
+- Approved content.
+- Scheduled content.
+- Published content.
+- Failed content.
+
+## 8.2 Content Creation Workflow
+
+Users can create content manually or with AI assistance.
+
+Creation fields:
+
+- Content title.
+- Platform.
+- Content format.
+- Topic.
+- Content objective.
+- Target audience.
+- Tone.
+- Language.
+- CTA.
+- Keywords.
+- Hashtags.
+- Media attachments.
+
+AI generation options:
+
+- Generate from an idea.
+- Generate from a topic.
+- Generate from a URL supplied by the user.
+- Generate from an existing post.
+- Repurpose existing content.
+- Improve existing content.
+- Generate multiple variations.
+
+## 8.3 Content Editor
+
+The editor must support:
+
+- Rich text editing.
+- Caption editing.
+- Hashtag editing.
+- Content preview.
+- Platform-specific formatting.
+- Media attachments.
+- Save Draft.
+- Regenerate.
+- Submit for Approval.
+
+Generated content must never be automatically published.
+
+## 8.4 Content Statuses
+
+- Idea.
+- Draft.
+- In Review.
+- Changes Requested.
+- Approved.
+- Scheduled.
+- Published.
+- Failed.
+- Archived.
+
+## 8.5 Content Repurposing
+
+Users can select existing content and request versions for other platforms.
+
+Example:
+
+Original: YouTube video transcript.
+
+Generated outputs:
+- Instagram carousel.
+- Instagram Reel script.
+- LinkedIn post.
+- TikTok script.
+- X thread.
+
+Each generated version must be saved as a separate content record linked to the original.
+
+---
+
+# 9. SOCIAL PLANNER
+
+Purpose:
+
+Manage the creator's social publishing calendar.
+
+## 9.1 Calendar Views
+
+- Monthly.
+- Weekly.
+- Daily.
+- List.
+
+## 9.2 Calendar Features
+
+- Create content directly from a date.
+- Move drafts between dates.
+- Filter by platform.
+- Filter by status.
+- Filter by content format.
+- View pending approvals.
+- View publishing history.
+
+## 9.3 Publishing Workflow
+
+Version 1 must support:
+
+- Draft content.
+- Approved content.
+- Planned publishing dates.
+- Publishing status.
+- Manual publishing workflow.
+- Integration-based publishing when officially supported.
+
+Important:
+
+If a social platform API is not configured or does not support a particular publishing operation, the system must not simulate successful publication.
+
+Provide a manual publishing option with:
+- Copy caption.
+- Download media.
+- Open target platform.
+- Mark as Published after user confirmation.
+
+For real API publishing, require an explicit owner approval before dispatch.
+
+The platform must respect each social network's API permissions, publishing restrictions, rate limits, and account eligibility.
+
+---
+
+# 10. MEDIA LIBRARY
+
+Purpose:
+
+Provide centralized storage and organization for creator media.
+
+Supported assets:
+
+- Images.
+- Videos.
+- Audio.
+- Logos.
+- Brand assets.
+- Thumbnails.
+- Documents.
+
+Features:
+
+- Upload.
+- Preview.
+- Rename.
+- Delete with confirmation.
+- Search.
+- Filter.
+- Categorize.
+- Attach to content.
+- Track usage.
+
+Media metadata:
+
+- File name.
+- File type.
+- MIME type.
+- File size.
+- Storage path.
+- Upload date.
+- Business ID.
+- Owner ID.
+- Related content IDs.
+
+File storage must use secure object storage.
+
+Do not store large binary files directly in Firestore documents.
+
+---
+
+# 11. AUDIENCE & CRM
+
+Purpose:
+
+Manage audience members, leads, and customers in one place.
+
+## 11.1 Contact Management
+
+Fields:
+
+- Full name.
+- Email.
+- Phone (optional).
+- Social platform.
+- Social username.
+- Contact source.
+- Contact type.
+- Tags.
+- Notes.
+- Consent status.
+- Creation date.
+
+Contact types:
+
+- Audience Member.
+- Lead.
+- Customer.
+- Partner.
+- Brand Contact.
+
+## 11.2 Customer Profiles
+
+Each profile must contain:
+
+- Basic information.
+- Contact history.
+- Purchase history.
+- Tags.
+- Notes.
+- Related campaigns.
+- Consent records.
+
+## 11.3 CRM Pipeline
+
+Suggested statuses:
+
+- New.
+- Interested.
+- Qualified.
+- Customer.
+- Inactive.
+- Archived.
+
+## 11.4 Customer Segmentation
+
+Users can create segments based on:
+
+- Contact source.
+- Tags.
+- Purchase history.
+- Last interaction.
+- Customer status.
+
+## 11.5 Privacy
+
+Only store personal information that is necessary for business operations.
+
+Support:
+- Consent records.
+- Data export.
+- Data deletion requests.
+- Unsubscribe status.
+- Access restrictions.
+
+---
+
+# 12. PRODUCTS & OFFERS
+
+Purpose:
+
+Enable creators to manage products and monetization offers.
+
+Initial supported product types:
+
+- Digital Downloads.
+- E-books.
+- Templates.
+- Online Courses.
+- Consulting Services.
+- Coaching Sessions.
+- Membership Offers.
+
+Product fields:
+
+- Product name.
+- Description.
+- Product type.
+- Price.
+- Currency.
+- Product image.
+- Download file reference.
+- Status.
+- Product URL.
+- Creation date.
+
+Product statuses:
+
+- Draft.
+- Active.
+- Inactive.
+- Archived.
+
+## 12.1 Product Management
+
+Users can:
+
+- Create products.
+- Edit products.
+- Upload product assets.
+- Set prices.
+- Manage product descriptions.
+- Create promotional offers.
+- View associated sales.
+
+Price changes must require explicit owner confirmation before becoming publicly effective.
+
+## 12.2 Storefront
+
+Provide a public-facing creator storefront.
+
+Each business must have:
+
+- Store name.
+- Logo.
+- Brand colors.
+- Description.
+- Product catalog.
+- Product detail pages.
+- Contact information.
+- Checkout integration.
+
+The storefront must be responsive.
+
+## 12.3 Checkout
+
+For MVP:
+
+- Integrate one supported payment provider.
+- Support successful and failed payment states.
+- Store payment references.
+- Store order records.
+- Provide order confirmation.
+- Support secure product delivery.
+- Prevent duplicate order processing.
+
+Payment credentials must never be stored directly in the application database.
+
+---
+
+# 13. CAMPAIGNS
+
+Purpose:
+
+Manage creator marketing campaigns.
+
+Campaign types:
+
+- Product Promotion.
+- Audience Growth.
+- Content Launch.
+- Affiliate Promotion.
+- Brand Partnership.
+- Customer Retention.
+
+Campaign fields:
+
+- Campaign name.
+- Campaign objective.
+- Target audience.
+- Platforms.
+- Start date.
+- End date.
+- Budget.
+- Related product.
+- Campaign content.
+- Status.
+
+Campaign statuses:
+
+- Draft.
+- In Review.
+- Approved.
+- Active.
+- Paused.
+- Completed.
+- Cancelled.
+
+The AI may create campaign proposals and content drafts.
+
+The owner must approve campaigns before publication, external messaging, or spending.
+
+---
+
+# 14. BUSINESS ANALYTICS
+
+Purpose:
+
+Provide reliable performance data.
+
+## 14.1 Dashboard Metrics
+
+Content metrics:
+- Published posts.
+- Engagement rate.
+- Reach.
+- Impressions.
+- Likes.
+- Comments.
+- Shares.
+- Saves.
+- Video views.
+
+Audience metrics:
+- Total followers.
+- Follower growth.
+- Audience engagement.
+- Platform distribution.
+
+Business metrics:
+- Total orders.
+- Total sales.
+- Gross revenue.
+- Refunds.
+- Net revenue.
+- Average order value.
+- Product performance.
+
+AI metrics:
+- Completed tasks.
+- Failed tasks.
+- Approval rate.
+- AI usage.
+- Estimated AI cost.
+
+## 14.2 Analytics Rules
+
+- Every metric must have a source.
+- Every metric must have a time range.
+- Unsupported metrics must not be fabricated.
+- Missing data must be displayed as unavailable.
+- Estimated values must be labeled as estimates.
+- Revenue data must come from actual recorded orders or connected payment systems.
+
+## 14.3 Reporting
+
+Allow users to generate:
+
+- Daily reports.
+- Weekly reports.
+- Monthly reports.
+- Content performance reports.
+- Business performance reports.
+
+AI-generated reports must be saved and retrievable.
+
+---
+
+# 15. AUTOMATION CENTER
+
+Purpose:
+
+Create controlled workflows between internal modules and connected services.
+
+## 15.1 Workflow Structure
+
+Every automation consists of:
+
+- Trigger.
+- Conditions.
+- Actions.
+- Approval requirements.
+- Execution history.
+
+## 15.2 Example Automations
+
+### Workflow A: New Content Idea
+
+Trigger: User creates a new content idea.
+
+Actions:
+1. Create a Content Agent task.
+2. Generate content drafts.
+3. Save drafts.
+4. Notify the owner.
+
+No external publication occurs.
+
+### Workflow B: New Product Order
+
+Trigger: Payment provider confirms successful payment.
+
+Actions:
+1. Create order.
+2. Associate order with customer.
+3. Generate order confirmation.
+4. Deliver the purchased product according to the approved delivery configuration.
+5. Update business analytics.
+
+Transactional fulfillment that the owner has explicitly configured and authorized may execute automatically.
+
+Marketing communications must still require separate approval.
+
+### Workflow C: Weekly Business Review
+
+Trigger: Weekly schedule.
+
+Actions:
+1. Collect business metrics.
+2. Analyze content performance.
+3. Identify opportunities.
+4. Prepare recommendations.
+5. Save the report.
+6. Notify the owner.
+
+### Workflow D: Low Content Activity
+
+Trigger: Content publishing activity falls below the owner's configured target.
+
+Actions:
+1. Detect the content gap.
+2. Ask Content Agent for new ideas.
+3. Prepare content drafts.
+4. Create a task for owner review.
+
+## 15.3 Automation Controls
+
+- Enable/Disable.
+- Run History.
+- Error History.
+- Last Execution.
+- Next Execution.
+- Retry.
+- Edit.
+- Delete with confirmation.
+
+No automation may bypass the global approval policy.
+
+---
+
+# 16. APPROVAL CENTER
+
+Purpose:
+
+Centralize all actions waiting for owner approval.
+
+Approval categories:
+
+- Content Publication.
+- Social Media Messages.
+- Marketing Emails.
+- Product Price Changes.
+- Campaign Launches.
+- Customer Responses.
+- External Integrations.
+- Other External Actions.
+
+Approval card must show:
+
+- Action title.
+- Requesting Agent.
+- Target platform.
+- Full content or payload.
+- Reason for the action.
+- Related business object.
+- Creation time.
+
+Available actions:
+
+- Approve.
+- Reject.
+- Request Changes.
+
+An approval must be auditable.
+
+Expired approvals must not execute.
+
+---
+
+# 17. BUSINESS MEMORY
+
+Purpose:
+
+Maintain shared, structured business knowledge for all Agents.
+
+Memory categories:
+
+1. Business Profile.
+2. Brand Identity.
+3. Audience Profile.
+4. Products.
+5. Content History.
+6. Customer Insights.
+7. Business Goals.
+8. Decisions.
+9. Campaign History.
+10. Performance Insights.
+
+Memory rules:
+
+- Use persistent structured records for critical business information.
+- Use semantic search for unstructured knowledge where appropriate.
+- Every important memory must have a source.
+- Users must be able to review and edit confirmed information.
+- Agents must distinguish confirmed facts from AI-generated assumptions.
+- Deleted business data must not remain available through AI retrieval.
+- Agents must not modify confirmed business facts without approval.
+
+---
+
+# 18. INTEGRATIONS
+
+Purpose:
+
+Connect the platform to external services.
+
+## 18.1 Initial Integration Targets
+
+Social Platforms:
+- Instagram.
+- Facebook.
+- YouTube.
+- TikTok.
+- LinkedIn.
+
+Business Services:
+- Stripe.
+- Email provider.
+- Cloud storage.
+- Google Analytics, where applicable.
+
+Integration requirements:
+
+- Official API access.
+- OAuth authentication where supported.
+- Secure token storage.
+- Token expiration handling.
+- Permission visibility.
+- Connection status.
+- Disconnect option.
+- Error reporting.
+- Rate-limit handling.
+
+## 18.2 Integration Status
+
+- Not Connected.
+- Connecting.
+- Connected.
+- Expired.
+- Permission Required.
+- Error.
+- Disconnected.
+
+## 18.3 Integration Security
+
+- Never expose API secrets in frontend code.
+- Store tokens server-side.
+- Encrypt sensitive tokens at rest.
+- Use least-privilege scopes.
+- Support token revocation.
+- Log external API failures.
+
+The product must not claim an integration is operational until its connection and permissions have been verified.
+
+---
+
+# 19. APPLICATION PAGES AND UI REQUIREMENTS
+
+## 19.1 Authentication Pages
+
+- Sign In.
+- Sign Up.
+- Forgot Password.
+- Account Verification.
+
+Support Google Sign-In and a secure email-based authentication option.
+
+## 19.2 Onboarding Pages
+
+- Business Setup.
+- Creator Profile.
+- Audience Definition.
+- Brand Identity.
+- Goals.
+- Monetization.
+- Review & Confirm.
+
+## 19.3 Main Application Pages
+
+### Page 1: Overview
+
+Business dashboard, AI Manager, activity feed, pending approvals.
+
+### Page 2: AI Workforce
+
+Agent cards, Agent profiles, task status, Agent settings.
+
+### Page 3: Content Studio
+
+Content editor, AI generation, content list, content preview.
+
+### Page 4: Social Planner
+
+Calendar, scheduled drafts, platform filters.
+
+### Page 5: Media Library
+
+Asset gallery, uploads, filters, file preview.
+
+### Page 6: Audience & CRM
+
+Contacts, customer profiles, segments, customer history.
+
+### Page 7: Products & Offers
+
+Product list, product editor, pricing, storefront settings.
+
+### Page 8: Campaigns
+
+Campaign list, campaign details, performance.
+
+### Page 9: Analytics
+
+Charts, performance cards, reports.
+
+### Page 10: Automation Center
+
+Workflow builder, automation list, execution history.
+
+### Page 11: Approvals
+
+Pending actions, approval history, rejection reasons.
+
+### Page 12: Business Memory
+
+Business knowledge, saved facts, brand profile, audience profile.
+
+### Page 13: Integrations
+
+Connected accounts, permissions, integration status.
+
+### Page 14: Settings
+
+Profile, business, billing, security, notifications.
+
+---
+
+# 20. USER STORIES
+
+## Epic A: Account Management
+
+**US-001:** As a visitor, I want to create an account so I can access the platform.
+
+Acceptance:
+- Email and password registration works.
+- Google authentication works when configured.
+- Invalid credentials show meaningful errors.
+- Password recovery is available.
+
+**US-002:** As a user, I want to manage my profile.
+
+Acceptance:
+- I can update profile information.
+- Changes persist.
+- Unauthorized users cannot access my profile.
+
+## Epic B: Business Setup
+
+**US-003:** As a creator, I want to define my business so AI Agents understand my goals.
+
+Acceptance:
+- Onboarding captures required information.
+- Data is saved.
+- Incomplete setup can be resumed.
+- Business profile can be edited.
+
+**US-004:** As a creator, I want AI to generate a business strategy.
+
+Acceptance:
+- AI uses my actual profile.
+- Results are saved.
+- Results can be edited.
+- AI assumptions are clearly identified.
+
+## Epic C: AI Workforce
+
+**US-005:** As a creator, I want to see my AI Agents and their responsibilities.
+
+Acceptance:
+- Agent profiles are visible.
+- Status is accurate.
+- Agent history is accessible.
+
+**US-006:** As a creator, I want to request work from the AI Manager.
+
+Acceptance:
+- User can submit natural language requests.
+- Manager creates structured tasks.
+- Tasks are assigned to the correct Agent.
+- Results are saved.
+- Errors are visible.
+
+## Epic D: Content Creation
+
+**US-007:** As a creator, I want AI to generate platform-specific content.
+
+Acceptance:
+- Platform can be selected.
+- Format can be selected.
+- Brand context is used.
+- Generated content can be edited.
+- Draft is saved.
+
+**US-008:** As a creator, I want to repurpose existing content.
+
+Acceptance:
+- Original content can be selected.
+- Target platforms can be selected.
+- New versions are generated.
+- Original content remains unchanged.
+
+## Epic E: Social Planning
+
+**US-009:** As a creator, I want to organize my content in a calendar.
+
+Acceptance:
+- Monthly, weekly, and daily views work.
+- Content can be assigned to dates.
+- Filters work.
+- Changes persist.
+
+**US-010:** As a creator, I want to approve content before publication.
+
+Acceptance:
+- Content can be submitted for approval.
+- Owner can approve or reject.
+- Approval is recorded.
+- No content is published without approval.
+
+## Epic F: CRM and Monetization
+
+**US-011:** As a creator, I want to manage audience contacts.
+
+Acceptance:
+- Contacts can be created and edited.
+- Contacts can be tagged.
+- Search works.
+- Records are business-scoped.
+
+**US-012:** As a creator, I want to manage digital products.
+
+Acceptance:
+- Products can be created.
+- Prices and descriptions can be edited.
+- Products can be activated or deactivated.
+- Changes persist.
+
+**US-013:** As a creator, I want to track orders.
+
+Acceptance:
+- Orders have unique IDs.
+- Payment status is accurate.
+- Duplicate payment events do not create duplicate orders.
+- Order history is accessible.
+
+## Epic G: Analytics
+
+**US-014:** As a creator, I want to understand business performance.
+
+Acceptance:
+- Metrics have a source.
+- Date filters work.
+- Charts use real records.
+- Missing metrics are not fabricated.
+
+## Epic H: Approvals
+
+**US-015:** As a creator, I want full control over external actions.
+
+Acceptance:
+- External actions create approval requests.
+- Requests show exact payloads.
+- Only authorized owners can approve.
+- Approval is auditable.
+- Rejected actions are not executed.
+
+## Epic I: Automation
+
+**US-016:** As a creator, I want to automate repetitive internal workflows.
+
+Acceptance:
+- Workflows can be created.
+- Triggers can be configured.
+- Execution history is saved.
+- Failures are reported.
+- External actions respect approval requirements.
+
+---
+
+# 21. DATABASE DESIGN
+
+The initial implementation should use a persistent database.
+
+Recommended Google AI Studio implementation:
+
+- Firebase Authentication for identity.
+- Cloud Firestore for initial persistent application data.
+- Cloud Storage for media files.
+
+The data model must be designed so that a future migration to PostgreSQL is possible.
+
+Every business-owned record must contain a businessId and ownerId where appropriate.
+
+## 21.1 Core Collections
+
+### users
+
+Fields:
+- id
+- email
+- displayName
+- avatarUrl
+- createdAt
+- updatedAt
+- status
+
+### businesses
+
+Fields:
+- id
+- ownerId
+- name
+- slug
+- description
+- category
+- niche
+- website
+- location
+- primaryLanguage
+- timezone
+- logoUrl
+- brandSettings
+- audienceProfile
+- businessGoals
+- monetizationModels
+- onboardingStatus
+- createdAt
+- updatedAt
+
+### businessMembers
+
+Fields:
+- id
+- businessId
+- userId
+- role
+- permissions
+- status
+- createdAt
+
+### agents
+
+Fields:
+- id
+- businessId
+- agentType
+- name
+- description
+- status
+- configuration
+- toolPermissions
+- createdAt
+- updatedAt
+
+### tasks
+
+Fields:
+- id
+- businessId
+- agentId
+- createdBy
+- title
+- description
+- priority
+- status
+- inputData
+- outputData
+- relatedEntityType
+- relatedEntityId
+- requiresApproval
+- errorDetails
+- estimatedCost
+- createdAt
+- updatedAt
+- completedAt
+
+### approvals
+
+Fields:
+- id
+- businessId
+- requestedByAgentId
+- requestedAction
+- targetPlatform
+- payload
+- relatedEntityType
+- relatedEntityId
+- status
+- approvedBy
+- rejectionReason
+- approvedPayloadHash
+- requestedAt
+- expiresAt
+- resolvedAt
+
+### content
+
+Fields:
+- id
+- businessId
+- createdBy
+- title
+- contentType
+- platform
+- topic
+- objective
+- targetAudience
+- language
+- caption
+- script
+- hashtags
+- cta
+- mediaIds
+- originalContentId
+- status
+- scheduledAt
+- publishedAt
+- externalPostId
+- aiGenerated
+- aiGenerationHistory
+- createdAt
+- updatedAt
+
+### mediaAssets
+
+Fields:
+- id
+- businessId
+- uploadedBy
+- fileName
+- mimeType
+- fileSize
+- storagePath
+- thumbnailPath
+- category
+- metadata
+- createdAt
+
+### socialAccounts
+
+Fields:
+- id
+- businessId
+- platform
+- platformAccountId
+- accountName
+- profileImageUrl
+- encryptedAccessToken
+- encryptedRefreshToken
+- scopes
+- tokenExpiresAt
+- connectionStatus
+- lastSyncAt
+- createdAt
+- updatedAt
+
+### contacts
+
+Fields:
+- id
+- businessId
+- fullName
+- email
+- phone
+- socialPlatform
+- socialUsername
+- source
+- contactType
+- tags
+- notes
+- consentStatus
+- createdAt
+- updatedAt
+
+### products
+
+Fields:
+- id
+- businessId
+- name
+- slug
+- description
+- productType
+- price
+- currency
+- imageUrl
+- deliveryAssetIds
+- status
+- createdAt
+- updatedAt
+
+### orders
+
+Fields:
+- id
+- businessId
+- customerId
+- orderNumber
+- items
+- subtotal
+- discount
+- total
+- currency
+- paymentProvider
+- paymentReference
+- paymentStatus
+- fulfillmentStatus
+- createdAt
+- updatedAt
+
+### campaigns
+
+Fields:
+- id
+- businessId
+- name
+- objective
+- campaignType
+- targetAudience
+- platforms
+- productIds
+- contentIds
+- budget
+- startDate
+- endDate
+- status
+- createdAt
+- updatedAt
+
+### automations
+
+Fields:
+- id
+- businessId
+- name
+- description
+- trigger
+- conditions
+- actions
+- enabled
+- approvalPolicy
+- lastExecutedAt
+- createdAt
+- updatedAt
+
+### automationRuns
+
+Fields:
+- id
+- businessId
+- automationId
+- status
+- inputData
+- outputData
+- error
+- startedAt
+- completedAt
+
+### analyticsSnapshots
+
+Fields:
+- id
+- businessId
+- platform
+- metricType
+- metricValue
+- source
+- periodStart
+- periodEnd
+- capturedAt
+
+### businessMemory
+
+Fields:
+- id
+- businessId
+- category
+- title
+- content
+- sourceType
+- sourceId
+- confidence
+- verifiedByOwner
+- createdAt
+- updatedAt
+
+### activityLogs
+
+Fields:
+- id
+- businessId
+- actorType
+- actorId
+- action
+- entityType
+- entityId
+- details
+- timestamp
+
+### subscriptions
+
+Fields:
+- id
+- businessId
+- plan
+- status
+- billingProvider
+- providerSubscriptionId
+- currentPeriodStart
+- currentPeriodEnd
+- createdAt
+- updatedAt
+
+## 21.2 Database Requirements
+
+- All IDs must be unique.
+- Business records must be scoped.
+- Use server-side authorization.
+- Use Firestore Security Rules.
+- Validate all writes.
+- Use server timestamps.
+- Use pagination for large collections.
+- Add appropriate indexes.
+- Store large files in object storage.
+- Do not store plaintext API secrets.
+- Use idempotency keys for payment and external action processing.
+- Keep audit records for sensitive actions.
+
+---
+
+# 22. API DESIGN
+
+Use server-side REST endpoints under:
+
+/api/v1
+
+All protected endpoints require authenticated access.
+
+The backend must derive user identity from the verified authentication session, not from a userId supplied by the client.
+
+## 22.1 Authentication
+
+POST /api/v1/auth/session
+
+POST /api/v1/auth/logout
+
+GET /api/v1/auth/me
+
+## 22.2 Business
+
+GET /api/v1/business
+
+POST /api/v1/business
+
+GET /api/v1/business/:businessId
+
+PATCH /api/v1/business/:businessId
+
+POST /api/v1/business/:businessId/complete-onboarding
+
+## 22.3 AI Manager
+
+POST /api/v1/ai/manager/chat
+
+POST /api/v1/ai/manager/plan
+
+GET /api/v1/ai/manager/history
+
+## 22.4 Agents
+
+GET /api/v1/agents
+
+GET /api/v1/agents/:agentId
+
+PATCH /api/v1/agents/:agentId
+
+POST /api/v1/agents/:agentId/execute
+
+GET /api/v1/agents/:agentId/tasks
+
+## 22.5 Tasks
+
+GET /api/v1/tasks
+
+POST /api/v1/tasks
+
+GET /api/v1/tasks/:taskId
+
+PATCH /api/v1/tasks/:taskId
+
+POST /api/v1/tasks/:taskId/retry
+
+POST /api/v1/tasks/:taskId/cancel
+
+## 22.6 Content
+
+GET /api/v1/content
+
+POST /api/v1/content
+
+GET /api/v1/content/:contentId
+
+PATCH /api/v1/content/:contentId
+
+DELETE /api/v1/content/:contentId
+
+POST /api/v1/content/generate
+
+POST /api/v1/content/repurpose
+
+POST /api/v1/content/:contentId/submit-approval
+
+## 22.7 Social Planner
+
+GET /api/v1/calendar
+
+POST /api/v1/calendar/items
+
+PATCH /api/v1/calendar/items/:itemId
+
+DELETE /api/v1/calendar/items/:itemId
+
+POST /api/v1/social/publish-request
+
+The publish-request endpoint must create an approval request. It must not publish directly.
+
+## 22.8 Media
+
+GET /api/v1/media
+
+POST /api/v1/media/upload
+
+GET /api/v1/media/:mediaId
+
+DELETE /api/v1/media/:mediaId
+
+## 22.9 CRM
+
+GET /api/v1/contacts
+
+POST /api/v1/contacts
+
+GET /api/v1/contacts/:contactId
+
+PATCH /api/v1/contacts/:contactId
+
+DELETE /api/v1/contacts/:contactId
+
+GET /api/v1/contacts/:contactId/history
+
+## 22.10 Products
+
+GET /api/v1/products
+
+POST /api/v1/products
+
+GET /api/v1/products/:productId
+
+PATCH /api/v1/products/:productId
+
+DELETE /api/v1/products/:productId
+
+## 22.11 Orders
+
+GET /api/v1/orders
+
+GET /api/v1/orders/:orderId
+
+POST /api/v1/orders/webhooks/:provider
+
+Webhook requests must be authenticated and verified.
+
+## 22.12 Campaigns
+
+GET /api/v1/campaigns
+
+POST /api/v1/campaigns
+
+GET /api/v1/campaigns/:campaignId
+
+PATCH /api/v1/campaigns/:campaignId
+
+POST /api/v1/campaigns/:campaignId/submit-approval
+
+## 22.13 Approvals
+
+GET /api/v1/approvals
+
+GET /api/v1/approvals/:approvalId
+
+POST /api/v1/approvals/:approvalId/approve
+
+POST /api/v1/approvals/:approvalId/reject
+
+POST /api/v1/approvals/:approvalId/request-changes
+
+## 22.14 Analytics
+
+GET /api/v1/analytics/overview
+
+GET /api/v1/analytics/content
+
+GET /api/v1/analytics/audience
+
+GET /api/v1/analytics/revenue
+
+GET /api/v1/analytics/agents
+
+## 22.15 Automations
+
+GET /api/v1/automations
+
+POST /api/v1/automations
+
+GET /api/v1/automations/:automationId
+
+PATCH /api/v1/automations/:automationId
+
+POST /api/v1/automations/:automationId/run
+
+GET /api/v1/automations/:automationId/runs
+
+## 22.16 Integrations
+
+GET /api/v1/integrations
+
+POST /api/v1/integrations/:provider/connect
+
+GET /api/v1/integrations/:provider/callback
+
+POST /api/v1/integrations/:provider/disconnect
+
+GET /api/v1/integrations/:provider/status
+
+---
+
+# 23. AI IMPLEMENTATION REQUIREMENTS
+
+## 23.1 Gemini Integration
+
+Use the Gemini API through server-side backend functions.
+
+Never expose GEMINI_API_KEY in browser code.
+
+Store secrets in the secure server-side secrets configuration.
+
+## 23.2 Structured Outputs
+
+AI Agent outputs must follow validated JSON schemas.
+
+Example task output:
+
+{
+  "taskType": "content_generation",
+  "status": "completed",
+  "result": {
+    "title": "Five Ways to Improve Your Content Strategy",
+    "platform": "instagram",
+    "contentType": "carousel",
+    "caption": "Example caption",
+    "hashtags": ["contentstrategy", "creatorbusiness"],
+    "slides": [
+      {
+        "number": 1,
+        "text": "Improve Your Content Strategy"
+      }
+    ]
+  },
+  "requiresApproval": false
+}
+
+This is an internal data contract, not a user-facing display format.
+
+## 23.3 AI Prompt Architecture
+
+Each Agent must have:
+
+- System instructions.
+- Role definition.
+- Business context.
+- Authorized tools.
+- Output schema.
+- Constraints.
+- Error handling rules.
+
+The AI Manager must never directly bypass application authorization or approval services.
+
+## 23.4 Context Management
+
+Do not send the entire business database to the model for every request.
+
+Retrieve only relevant business context.
+
+Use structured database queries first.
+
+Use semantic retrieval for unstructured business documents when needed.
+
+## 23.5 AI Cost Management
+
+Track:
+- Model.
+- Input tokens.
+- Output tokens.
+- Request type.
+- Business ID.
+- Agent ID.
+- Estimated cost.
+- Execution time.
+
+Implement usage limits per subscription plan.
+
+---
+
+# 24. UI/UX DESIGN SYSTEM
+
+## 24.1 Visual Direction
+
+The interface should feel like a premium AI-powered business operating system.
+
+Design keywords:
+
+- Premium.
+- Modern.
+- Minimal.
+- Professional.
+- AI-native.
+- Data-rich.
+- Trustworthy.
+
+## 24.2 Color Palette
+
+Primary background: #0B1020
+
+Secondary background: #11182A
+
+Card background: #151E33
+
+Primary accent: #8B5CF6
+
+Secondary accent: #6366F1
+
+Success: #22C55E
+
+Warning: #F59E0B
+
+Error: #EF4444
+
+Primary text: #F8FAFC
+
+Secondary text: #94A3B8
+
+Borders: #273449
+
+Use color consistently and avoid excessive gradients.
+
+## 24.3 Typography
+
+Use a clean modern sans-serif font.
+
+Recommended:
+- Inter for English.
+- Vazirmatn as an optional Persian localization font.
+
+## 24.4 Layout
+
+Desktop:
+- Fixed left sidebar.
+- Main content area.
+- Optional right contextual panel.
+- Persistent notification and account controls.
+
+Mobile:
+- Responsive navigation.
+- Collapsible sidebar.
+- Stacked dashboard cards.
+- Mobile-friendly content editor.
+- Touch-friendly actions.
+
+## 24.5 Component Requirements
+
+Create reusable components:
+
+- MetricCard.
+- AgentCard.
+- TaskCard.
+- ApprovalCard.
+- ContentCard.
+- ContentEditor.
+- CalendarView.
+- CustomerTable.
+- ProductCard.
+- CampaignCard.
+- ActivityFeed.
+- IntegrationCard.
+- ChartCard.
+- EmptyState.
+- LoadingState.
+- ErrorState.
+- ConfirmationDialog.
+
+All components must support loading, empty, success, and error states.
+
+## 24.6 Interaction Requirements
+
+- Provide clear success and error notifications.
+- Confirm destructive operations.
+- Show loading indicators for AI tasks.
+- Allow users to cancel long-running operations where possible.
+- Preserve unsaved content when appropriate.
+- Use accessible contrast.
+- Support keyboard navigation.
+- Avoid unnecessary animations.
+
+---
+
+# 25. NON-FUNCTIONAL REQUIREMENTS
+
+## Performance
+
+- Initial dashboard should load efficiently.
+- Use pagination.
+- Lazy-load large media collections.
+- Optimize images.
+- Use background processing for long AI operations.
+- Avoid blocking the user interface during AI execution.
+
+## Security
+
+- Secure authentication.
+- Server-side authorization.
+- Business-level data isolation.
+- Secure secrets management.
+- Encrypted external credentials.
+- Input validation.
+- Rate limiting.
+- Audit logging.
+- Secure file uploads.
+- Protection against cross-site scripting and request forgery where applicable.
+
+## Reliability
+
+- Handle failed AI requests.
+- Handle external API failures.
+- Support retry with idempotency.
+- Prevent duplicate orders.
+- Persist task states.
+- Provide useful error messages.
+
+## Scalability
+
+- Modular backend.
+- Separation of application services.
+- Background job processing.
+- Configurable AI providers.
+- Database abstraction.
+- Integration abstraction.
+
+## Internationalization
+
+The initial interface should be English-first.
+
+Architecture must support:
+- Multiple languages.
+- Multiple currencies.
+- Multiple time zones.
+- Localized dates and numbers.
+- Right-to-left languages in future versions.
+
+---
+
+# 26. MVP SCOPE AND PRIORITIES
+
+## P0 – Mandatory for MVP
+
+- Authentication.
+- Business onboarding.
+- Business profile.
+- Business Memory.
+- AI Manager.
+- Three initial functional Agents.
+- Agent task management.
+- Content Studio.
+- Content editor.
+- Content calendar.
+- Media Library.
+- Approval Center.
+- Basic CRM.
+- Product management.
+- Basic dashboard.
+- Persistent database.
+- Server-side Gemini integration.
+- Business data isolation.
+- Activity logs.
+
+## P1 – Required for First Commercial Release
+
+- Public creator storefront.
+- One payment provider integration.
+- Order management.
+- Secure digital product delivery.
+- Social account connections.
+- Supported publishing workflows.
+- Content analytics.
+- Revenue analytics.
+- Email integration.
+- Subscription billing.
+
+## P2 – Future Expansion
+
+- Additional social platforms.
+- Advanced video generation.
+- Advanced image generation.
+- More specialist Agents.
+- Advanced automation builder.
+- Brand partnership management.
+- Affiliate management.
+- Advanced customer segmentation.
+- Multi-business management.
+- Team collaboration.
+- Advanced business forecasting.
+
+---
+
+# 27. MVP ACCEPTANCE CRITERIA
+
+The MVP is considered functionally complete only when the following end-to-end scenarios work.
+
+### Scenario 1: New User Onboarding
+
+1. User creates an account.
+2. User creates a business.
+3. User defines their creator niche.
+4. User defines their audience.
+5. User configures brand identity.
+6. AI generates a business profile summary.
+7. User confirms the summary.
+8. Information is saved persistently.
+
+Expected result: All Agents can access the confirmed business context.
+
+### Scenario 2: AI Content Generation
+
+1. User requests an Instagram carousel.
+2. AI Manager creates a task.
+3. Content Agent generates the carousel.
+4. Result is validated.
+5. Content is saved as a draft.
+6. User opens the content editor.
+7. User modifies the content.
+8. Changes are saved.
+
+Expected result: A persistent, editable content item exists.
+
+### Scenario 3: Approval-Based Publication
+
+1. User submits content for publication approval.
+2. Approval request is created.
+3. User reviews the exact content and destination.
+4. User approves the request.
+5. Publishing integration is invoked only if configured and authorized.
+6. Result is recorded.
+
+Expected result: No publication happens without explicit approval.
+
+If the integration is unavailable, the system must provide a manual publishing workflow and must not report successful API publication.
+
+### Scenario 4: Customer Management
+
+1. User creates a contact.
+2. Contact appears in CRM.
+3. User adds tags.
+4. Customer history is updated.
+5. Customer can be searched and filtered.
+
+Expected result: CRM data persists and is isolated by business.
+
+### Scenario 5: Product and Order Management
+
+1. User creates a digital product.
+2. Product is activated.
+3. Customer completes a payment through a configured provider.
+4. Payment webhook is verified.
+5. Order is created.
+6. Customer receives authorized product delivery.
+7. Analytics updates.
+
+Expected result: Order and revenue data reflect actual payment events.
+
+### Scenario 6: Business Analytics
+
+1. User opens the dashboard.
+2. System retrieves real business records.
+3. Metrics are calculated.
+4. Date filters work.
+5. Missing external metrics are labeled unavailable.
+
+Expected result: No fabricated business performance data.
+
+### Scenario 7: AI Task Failure
+
+1. An Agent task starts.
+2. AI request fails.
+3. Task is marked Failed.
+4. Error is logged.
+5. User sees the failure.
+6. User can retry when appropriate.
+
+Expected result: Failed tasks are recoverable and never falsely marked completed.
+
+### Scenario 8: Cross-Business Data Isolation
+
+1. User A creates a business record.
+2. User B attempts to access that record.
+3. Backend authorization denies access.
+
+Expected result: No cross-business data exposure.
+
+---
+
+# 28. TESTING STRATEGY
+
+Required test categories:
+
+### Authentication Tests
+- Registration.
+- Login.
+- Logout.
+- Password recovery.
+- Unauthorized access.
+
+### Authorization Tests
+- Business isolation.
+- Role permissions.
+- Approval ownership.
+- Restricted API access.
+
+### Agent Tests
+- Task creation.
+- Task assignment.
+- Structured output validation.
+- Failure handling.
+- Retry.
+- Tool permission enforcement.
+
+### Content Tests
+- Draft creation.
+- Editing.
+- Repurposing.
+- Calendar placement.
+- Approval workflow.
+
+### Commerce Tests
+- Product creation.
+- Payment verification.
+- Duplicate webhook protection.
+- Order creation.
+- Secure delivery.
+
+### Integration Tests
+- OAuth connection.
+- Token expiration.
+- Disconnection.
+- API errors.
+- Rate limits.
+
+### UI Tests
+- Desktop responsiveness.
+- Mobile responsiveness.
+- Navigation.
+- Forms.
+- Loading states.
+- Empty states.
+- Error states.
+
+---
+
+# 29. SUCCESS METRICS
+
+Initial product metrics:
+
+- Onboarding completion rate.
+- Time to first generated content.
+- Weekly active creators.
+- Content drafts created per user.
+- Approval completion rate.
+- Agent task completion rate.
+- Automation adoption.
+- Weekly returning users.
+- Paid conversion rate.
+- Monthly recurring revenue.
+- Customer churn.
+- AI cost per active user.
+
+Primary activation metric:
+
+A creator who completes onboarding, generates content, saves it, and organizes it in the content calendar within the first seven days.
+
+Primary product value metric:
+
+The percentage of active users who complete a meaningful content-to-audience or content-to-sales workflow using the platform.
+
+---
+
+# 30. IMPLEMENTATION STRATEGY FOR GOOGLE AI STUDIO BUILD MODE
+
+This PRD defines the product, but implementation should be incremental.
+
+Do not ask the coding agent to generate the entire production system in one operation.
+
+Use the following development sequence.
+
+## Build Stage 1: Application Foundation
+
+Implement:
+- React application.
+- Responsive dashboard layout.
+- Authentication.
+- Firebase configuration.
+- Firestore connection.
+- Database structure.
+- Business isolation.
+- Reusable UI components.
+- Main navigation.
+- Onboarding.
+
+Deliverable:
+A working application with persistent user accounts and business profiles.
+
+## Build Stage 2: AI Foundation
+
+Implement:
+- Server-side Gemini integration.
+- Secure API handling.
+- AI Manager.
+- Agent configuration.
+- Task management.
+- Structured output validation.
+- Business Memory.
+
+Deliverable:
+A working AI workforce with persistent task history.
+
+## Build Stage 3: Content Operations
+
+Implement:
+- Content Studio.
+- AI content generation.
+- Content editor.
+- Media Library.
+- Social Planner.
+- Approval Center.
+
+Deliverable:
+A complete content production and review workflow.
+
+## Build Stage 4: Business Operations
+
+Implement:
+- CRM.
+- Products.
+- Campaigns.
+- Business dashboard.
+- Analytics.
+- Automation Center.
+
+Deliverable:
+A working creator business management system.
+
+## Build Stage 5: External Integrations
+
+Implement:
+- Social OAuth integrations.
+- Supported publishing APIs.
+- Payment integration.
+- Email integration.
+- Secure webhook processing.
+
+Deliverable:
+A connected business platform capable of executing explicitly approved external actions.
+
+## Build Stage 6: Quality and Production Readiness
+
+Implement:
+- Security review.
+- Business isolation tests.
+- Error handling.
+- Performance optimization.
+- Audit logs.
+- Backup strategy.
+- Deployment configuration.
+- Monitoring.
+
+Deliverable:
+A production-ready SaaS release candidate.
+
+---
+
+# 31. TECHNICAL IMPLEMENTATION CONSTRAINTS
+
+1. Use React and TypeScript for the frontend.
+2. Use the Node.js server-side runtime for backend logic.
+3. Use Firebase Authentication.
+4. Use Cloud Firestore for initial persistent storage.
+5. Use Cloud Storage for media assets.
+6. Use Gemini API only from server-side code.
+7. Keep API keys and credentials out of client-side bundles.
+8. Implement all important business operations through backend services.
+9. Implement Firestore Security Rules and backend authorization.
+10. Use modular service architecture.
+11. Separate AI orchestration from UI components.
+12. Use structured schemas to validate Agent outputs.
+13. Implement approval enforcement on the server, not only in the frontend.
+14. Implement a centralized activity log.
+15. Do not hardcode fake social media integrations.
+16. Do not use mock data in production views.
+17. Use explicit demo mode for sample data.
+18. Keep all business data persistent.
+19. Implement reusable design components.
+20. Preserve existing working features when adding new functionality.
+
+### Important Database Architecture Decision
+
+Firestore is the recommended starting point for the initial Google AI Studio implementation because of its integrated Firebase setup.
+
+However, the application should avoid tightly coupling business logic to Firestore-specific behavior.
+
+Create a data access layer so that a future migration to PostgreSQL remains possible.
+
+For complex reporting, financial data, advanced relationships, or higher-scale transactional requirements, PostgreSQL can be considered in a later architecture revision.
+
+---
+
+# 32. FINAL PRODUCT DEFINITION
+
+MicroBusiness Autopilot Creator Edition is an all-in-one AI-powered business operating system for independent social media creators.
+
+It enables creators to:
+
+- Understand and organize their business.
+- Develop their personal brand.
+- Research content opportunities.
+- Produce platform-specific content.
+- Plan social media activity.
+- Manage audiences and customers.
+- Create and sell digital products.
+- Manage campaigns.
+- Track business performance.
+- Coordinate specialized AI Agents.
+- Automate repetitive workflows.
+- Maintain complete control over external actions.
+
+The central differentiator is not AI content generation alone.
+
+It is the integration of persistent business data, coordinated AI Agents, end-to-end business workflows, and mandatory human approval.
+
+**Final Product Positioning:**
+
+"MicroBusiness Autopilot gives every independent creator an intelligent virtual team to manage the business behind their content."
+
+**End of PRD – Version 1.0**

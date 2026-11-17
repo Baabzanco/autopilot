@@ -1,0 +1,491 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user account profile isolated to the authenticated owner.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "email": { "type": "string", "format": "email", "maxLength": 254 },
+        "displayName": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "avatarUrl": { "type": "string", "maxLength": 500 },
+        "preferredLocale": { "type": "string", "enum": ["fa", "en"] },
+        "preferredNumerals": { "type": "string", "enum": ["persian", "latin"] },
+        "preferredCurrency": { "type": "string", "enum": ["IRT", "IRR", "USD"] },
+        "activeBusinessId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["active", "suspended"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "email", "displayName", "preferredLocale", "status", "createdAt", "updatedAt"]
+    },
+    "Business": {
+      "title": "Business",
+      "description": "Creator business profile, brand identity, audience profile, goals, and localization preferences.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "creatorName": { "type": "string", "maxLength": 120 },
+        "slug": { "type": "string", "minLength": 1, "maxLength": 120, "pattern": "^[a-z0-9\\-]+$" },
+        "category": { "type": "string", "maxLength": 100 },
+        "niche": { "type": "string", "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "website": { "type": "string", "maxLength": 300 },
+        "location": { "type": "string", "maxLength": 120 },
+        "primaryLanguage": { "type": "string", "enum": ["fa", "en", "ar"] },
+        "currency": { "type": "string", "enum": ["IRT", "IRR", "USD"] },
+        "numeralStyle": { "type": "string", "enum": ["persian", "latin"] },
+        "timezone": { "type": "string", "maxLength": 64 },
+        "onboardingStep": { "type": "integer" },
+        "onboardingStatus": { "type": "string", "enum": ["in_progress", "completed"] },
+        "profileSummary": { "type": "string", "maxLength": 4000 },
+        "profileConfirmed": { "type": "boolean" },
+        "creatorProfile": { "type": "object" },
+        "audienceProfile": { "type": "object" },
+        "brandSettings": { "type": "object" },
+        "businessGoals": { "type": "object" },
+        "monetizationModels": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "ownerId", "name", "slug", "primaryLanguage", "currency", "onboardingStatus", "createdAt", "updatedAt"]
+    },
+    "Agent": {
+      "title": "Agent",
+      "description": "AI Workforce specialist agent configuration and state.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "agentType": { "type": "string", "enum": ["chief_manager", "content", "research_growth", "sales_monetization", "customer_relationship"] },
+        "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "role": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "status": { "type": "string", "enum": ["active", "idle", "working", "waiting_input", "waiting_approval", "failed", "disabled"] },
+        "enabled": { "type": "boolean" },
+        "responsibilities": { "type": "array" },
+        "allowedTools": { "type": "array" },
+        "preferredTone": { "type": "string", "maxLength": 80 },
+        "outputLanguage": { "type": "string", "enum": ["fa", "en", "bilingual"] },
+        "totalTokensUsed": { "type": "integer" },
+        "estimatedCostUsd": { "type": "number" },
+        "tasksCompleted": { "type": "integer" },
+        "lastActivityAt": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "agentType", "name", "role", "status", "enabled", "createdAt", "updatedAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "Persistent AI agent task with strict lifecycle states.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "agentId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "agentType": { "type": "string", "maxLength": 64 },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "description": { "type": "string", "maxLength": 2000 },
+        "priority": { "type": "string", "enum": ["low", "medium", "high", "urgent"] },
+        "status": { "type": "string", "enum": ["created", "assigned", "in_progress", "awaiting_input", "awaiting_approval", "approved", "rejected", "completed", "failed", "cancelled"] },
+        "inputSummary": { "type": "string", "maxLength": 3000 },
+        "outputSummary": { "type": "string", "maxLength": 12000 },
+        "outputStructured": { "type": "object" },
+        "relatedEntityType": { "type": "string", "maxLength": 64 },
+        "relatedEntityId": { "type": "string", "maxLength": 128 },
+        "requiresApproval": { "type": "boolean" },
+        "errorDetails": { "type": "string", "maxLength": 1000 },
+        "inputTokens": { "type": "integer" },
+        "outputTokens": { "type": "integer" },
+        "estimatedCostUsd": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "agentId", "title", "priority", "status", "requiresApproval", "createdAt", "updatedAt"]
+    },
+    "Approval": {
+      "title": "Approval",
+      "description": "Human-in-the-loop approval request for any external or public-facing action.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "category": { "type": "string", "enum": ["content_publication", "social_message", "marketing_email", "price_change", "campaign_launch", "customer_reply", "external_integration", "other"] },
+        "actionTitle": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "requestingAgentId": { "type": "string", "maxLength": 128 },
+        "requestingAgentName": { "type": "string", "maxLength": 120 },
+        "targetPlatform": { "type": "string", "maxLength": 64 },
+        "reason": { "type": "string", "maxLength": 1000 },
+        "payloadSummary": { "type": "string", "maxLength": 12000 },
+        "payloadData": { "type": "object" },
+        "payloadHash": { "type": "string", "maxLength": 128 },
+        "relatedEntityType": { "type": "string", "maxLength": 64 },
+        "relatedEntityId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["pending", "approved", "rejected", "changes_requested", "expired"] },
+        "resolutionNote": { "type": "string", "maxLength": 1000 },
+        "approvedBy": { "type": "string", "maxLength": 128 },
+        "executionResult": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "category", "actionTitle", "payloadHash", "status", "createdAt", "updatedAt"]
+    },
+    "ContentItem": {
+      "title": "ContentItem",
+      "description": "Content studio draft, script, carousel, or scheduled/published item.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "platform": { "type": "string", "enum": ["instagram", "telegram", "youtube", "tiktok", "linkedin", "x", "newsletter"] },
+        "contentType": { "type": "string", "enum": ["post", "carousel", "reel_script", "short_script", "video_description", "story", "thread", "newsletter"] },
+        "topic": { "type": "string", "maxLength": 300 },
+        "objective": { "type": "string", "maxLength": 300 },
+        "targetAudience": { "type": "string", "maxLength": 300 },
+        "tone": { "type": "string", "maxLength": 80 },
+        "language": { "type": "string", "enum": ["fa", "en", "ar"] },
+        "caption": { "type": "string", "maxLength": 10000 },
+        "script": { "type": "string", "maxLength": 15000 },
+        "cta": { "type": "string", "maxLength": 300 },
+        "hashtags": { "type": "array" },
+        "mediaIds": { "type": "array" },
+        "originalContentId": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "enum": ["idea", "draft", "in_review", "changes_requested", "approved", "scheduled", "published", "failed", "archived"] },
+        "scheduledDate": { "type": "string", "maxLength": 32 },
+        "scheduledTime": { "type": "string", "maxLength": 16 },
+        "publishedAtLabel": { "type": "string", "maxLength": 64 },
+        "aiGenerated": { "type": "boolean" },
+        "aiModel": { "type": "string", "maxLength": 80 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "title", "platform", "contentType", "language", "status", "aiGenerated", "createdAt", "updatedAt"]
+    },
+    "MediaAsset": {
+      "title": "MediaAsset",
+      "description": "Creator media metadata and lightweight preview asset.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fileName": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "category": { "type": "string", "enum": ["image", "video", "audio", "logo", "brand_asset", "thumbnail", "document"] },
+        "mimeType": { "type": "string", "maxLength": 100 },
+        "fileSize": { "type": "integer" },
+        "previewUrl": { "type": "string", "maxLength": 350000 },
+        "storagePath": { "type": "string", "maxLength": 500 },
+        "relatedContentIds": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "fileName", "category", "mimeType", "fileSize", "createdAt", "updatedAt"]
+    },
+    "Contact": {
+      "title": "Contact",
+      "description": "Audience member, lead, or customer record in CRM.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "fullName": { "type": "string", "minLength": 1, "maxLength": 140 },
+        "email": { "type": "string", "maxLength": 254 },
+        "phone": { "type": "string", "maxLength": 32 },
+        "socialPlatform": { "type": "string", "maxLength": 50 },
+        "socialUsername": { "type": "string", "maxLength": 100 },
+        "source": { "type": "string", "maxLength": 100 },
+        "contactType": { "type": "string", "enum": ["audience_member", "lead", "customer", "partner", "brand_contact"] },
+        "pipelineStage": { "type": "string", "enum": ["new", "interested", "qualified", "customer", "inactive", "archived"] },
+        "tags": { "type": "array" },
+        "notes": { "type": "string", "maxLength": 3000 },
+        "consentStatus": { "type": "string", "enum": ["subscribed", "unsubscribed", "pending"] },
+        "totalSpent": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "fullName", "contactType", "pipelineStage", "consentStatus", "createdAt", "updatedAt"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Digital product, course, template, or consulting offer.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 4000 },
+        "productType": { "type": "string", "enum": ["digital_download", "ebook", "template", "online_course", "consulting", "coaching", "membership"] },
+        "price": { "type": "number" },
+        "pendingPrice": { "type": "number" },
+        "currency": { "type": "string", "enum": ["IRT", "IRR", "USD"] },
+        "deliveryNote": { "type": "string", "maxLength": 500 },
+        "productUrl": { "type": "string", "maxLength": 300 },
+        "status": { "type": "string", "enum": ["draft", "active", "inactive", "archived"] },
+        "salesCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "name", "productType", "price", "currency", "status", "createdAt", "updatedAt"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Tracked customer order with idempotency reference.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "orderNumber": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "customerId": { "type": "string", "maxLength": 128 },
+        "customerName": { "type": "string", "maxLength": 140 },
+        "customerEmail": { "type": "string", "maxLength": 254 },
+        "productId": { "type": "string", "maxLength": 128 },
+        "productName": { "type": "string", "maxLength": 160 },
+        "total": { "type": "number" },
+        "currency": { "type": "string", "enum": ["IRT", "IRR", "USD"] },
+        "paymentProvider": { "type": "string", "maxLength": 64 },
+        "paymentReference": { "type": "string", "maxLength": 128 },
+        "paymentStatus": { "type": "string", "enum": ["pending", "paid", "failed", "refunded"] },
+        "fulfillmentStatus": { "type": "string", "enum": ["pending", "delivered", "failed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "orderNumber", "productId", "total", "currency", "paymentStatus", "fulfillmentStatus", "createdAt", "updatedAt"]
+    },
+    "Campaign": {
+      "title": "Campaign",
+      "description": "Creator marketing campaign proposal and execution tracking.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "campaignType": { "type": "string", "enum": ["product_promotion", "audience_growth", "content_launch", "affiliate", "brand_partnership", "retention"] },
+        "objective": { "type": "string", "maxLength": 1000 },
+        "targetAudience": { "type": "string", "maxLength": 400 },
+        "platforms": { "type": "array" },
+        "relatedProductId": { "type": "string", "maxLength": 128 },
+        "budget": { "type": "number" },
+        "currency": { "type": "string", "enum": ["IRT", "IRR", "USD"] },
+        "startDate": { "type": "string", "maxLength": 32 },
+        "endDate": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "enum": ["draft", "in_review", "approved", "active", "paused", "completed", "cancelled"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "name", "campaignType", "status", "createdAt", "updatedAt"]
+    },
+    "Automation": {
+      "title": "Automation",
+      "description": "Internal controlled automation workflow.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "name": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "triggerType": { "type": "string", "enum": ["new_content_idea", "new_order", "weekly_review", "low_content_activity", "manual"] },
+        "actionSummary": { "type": "string", "maxLength": 500 },
+        "enabled": { "type": "boolean" },
+        "requiresApprovalForExternal": { "type": "boolean" },
+        "runCount": { "type": "integer" },
+        "lastRunStatus": { "type": "string", "enum": ["never", "success", "failed"] },
+        "lastExecutedAt": { "type": "string", "maxLength": 64 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "name", "triggerType", "enabled", "requiresApprovalForExternal", "createdAt", "updatedAt"]
+    },
+    "AutomationRun": {
+      "title": "AutomationRun",
+      "description": "Execution history record for an automation workflow.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "automationId": { "type": "string", "minLength": 1, "maxLength": 128 },
+        "automationName": { "type": "string", "maxLength": 160 },
+        "status": { "type": "string", "enum": ["running", "success", "failed"] },
+        "outputSummary": { "type": "string", "maxLength": 2000 },
+        "error": { "type": "string", "maxLength": 1000 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "automationId", "status", "createdAt"]
+    },
+    "BusinessMemoryItem": {
+      "title": "BusinessMemoryItem",
+      "description": "Shared structured business fact or AI insight.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "category": { "type": "string", "enum": ["business_profile", "brand_identity", "audience_profile", "products", "content_history", "customer_insights", "business_goals", "decisions", "campaign_history", "performance_insights"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 180 },
+        "content": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "sourceType": { "type": "string", "enum": ["owner_confirmed", "ai_inferred", "analytics_derived"] },
+        "verifiedByOwner": { "type": "boolean" },
+        "confidence": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "category", "title", "content", "sourceType", "verifiedByOwner", "createdAt", "updatedAt"]
+    },
+    "ActivityLog": {
+      "title": "ActivityLog",
+      "description": "Immutable chronological audit log of business and AI events.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "actorType": { "type": "string", "enum": ["owner", "agent", "system"] },
+        "actorName": { "type": "string", "maxLength": 120 },
+        "action": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "entityType": { "type": "string", "maxLength": 64 },
+        "entityId": { "type": "string", "maxLength": 128 },
+        "details": { "type": "string", "maxLength": 600 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "actorType", "action", "details", "createdAt"]
+    },
+    "Integration": {
+      "title": "Integration",
+      "description": "External platform connection status without storing plaintext secrets.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "provider": { "type": "string", "enum": ["instagram", "youtube", "tiktok", "linkedin", "telegram", "zarinpal", "stripe", "email", "google_analytics"] },
+        "displayName": { "type": "string", "maxLength": 120 },
+        "category": { "type": "string", "enum": ["social", "payment", "messaging", "analytics"] },
+        "connectionStatus": { "type": "string", "enum": ["not_connected", "connecting", "connected", "expired", "permission_required", "error", "disconnected"] },
+        "accountHandle": { "type": "string", "maxLength": 120 },
+        "scopes": { "type": "array" },
+        "statusNote": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "provider", "connectionStatus", "createdAt", "updatedAt"]
+    },
+    "AnalyticsReport": {
+      "title": "AnalyticsReport",
+      "description": "Saved AI-generated or system-computed performance report.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "reportType": { "type": "string", "enum": ["daily", "weekly", "monthly", "content_performance", "business_performance"] },
+        "title": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "summary": { "type": "string", "maxLength": 12000 },
+        "dataSourceNote": { "type": "string", "maxLength": 500 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "reportType", "title", "summary", "createdAt"]
+    },
+    "AiChatMessage": {
+      "title": "AiChatMessage",
+      "description": "Persistent conversation message with the Chief AI Manager.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "businessId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "ownerId": { "type": "string", "minLength": 1, "maxLength": 128, "pattern": "^[a-zA-Z0-9_\\-]+$" },
+        "role": { "type": "string", "enum": ["user", "assistant"] },
+        "content": { "type": "string", "minLength": 1, "maxLength": 12000 },
+        "createdTaskId": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "businessId", "ownerId", "role", "content", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account profiles indexed by Firebase Auth UID."
+    },
+    "/businesses/{businessId}": {
+      "schema": { "$ref": "#/entities/Business" },
+      "description": "Multi-tenant business workspaces owned by a creator."
+    },
+    "/businesses/{businessId}/agents/{agentId}": {
+      "schema": { "$ref": "#/entities/Agent" },
+      "description": "AI Workforce agents configured for a business."
+    },
+    "/businesses/{businessId}/tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Persistent AI agent tasks."
+    },
+    "/businesses/{businessId}/approvals/{approvalId}": {
+      "schema": { "$ref": "#/entities/Approval" },
+      "description": "Owner approval requests for external actions."
+    },
+    "/businesses/{businessId}/content/{contentId}": {
+      "schema": { "$ref": "#/entities/ContentItem" },
+      "description": "Content drafts, scripts, and scheduled items."
+    },
+    "/businesses/{businessId}/mediaAssets/{mediaId}": {
+      "schema": { "$ref": "#/entities/MediaAsset" },
+      "description": "Creator media assets metadata."
+    },
+    "/businesses/{businessId}/contacts/{contactId}": {
+      "schema": { "$ref": "#/entities/Contact" },
+      "description": "Audience and customer CRM records."
+    },
+    "/businesses/{businessId}/products/{productId}": {
+      "schema": { "$ref": "#/entities/Product" },
+      "description": "Digital products and creator offers."
+    },
+    "/businesses/{businessId}/orders/{orderId}": {
+      "schema": { "$ref": "#/entities/Order" },
+      "description": "Recorded product orders."
+    },
+    "/businesses/{businessId}/campaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/Campaign" },
+      "description": "Marketing campaigns."
+    },
+    "/businesses/{businessId}/automations/{automationId}": {
+      "schema": { "$ref": "#/entities/Automation" },
+      "description": "Controlled automation workflows."
+    },
+    "/businesses/{businessId}/automationRuns/{runId}": {
+      "schema": { "$ref": "#/entities/AutomationRun" },
+      "description": "Execution logs for automations."
+    },
+    "/businesses/{businessId}/businessMemory/{memoryId}": {
+      "schema": { "$ref": "#/entities/BusinessMemoryItem" },
+      "description": "Shared business memory records."
+    },
+    "/businesses/{businessId}/activityLogs/{logId}": {
+      "schema": { "$ref": "#/entities/ActivityLog" },
+      "description": "Immutable business audit trail."
+    },
+    "/businesses/{businessId}/integrations/{integrationId}": {
+      "schema": { "$ref": "#/entities/Integration" },
+      "description": "External integration status."
+    },
+    "/businesses/{businessId}/analyticsReports/{reportId}": {
+      "schema": { "$ref": "#/entities/AnalyticsReport" },
+      "description": "Saved analytics and AI reports."
+    },
+    "/businesses/{businessId}/aiChats/{chatId}": {
+      "schema": { "$ref": "#/entities/AiChatMessage" },
+      "description": "Persistent AI Manager conversation history."
+    }
+  }
+}

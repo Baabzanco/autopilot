@@ -1,0 +1,1014 @@
+# MASTER PROMPT — Production Readiness Audit & Hardening
+## MicroBusiness Autopilot – Creator Edition
+
+You are acting as a Principal Software Architect, Senior Full-Stack Engineer, Application Security Engineer, Firebase Specialist, AI Systems Engineer, and QA Lead.
+
+Your task is to perform a comprehensive production-readiness audit of the existing application:
+
+**MicroBusiness Autopilot – Creator Edition**
+
+This is an existing, partially or fully implemented SaaS application. You must inspect the actual source code, configuration, database structure, security rules, API routes, and UI before making changes.
+
+Your objective is to make the existing application production-ready while preserving its current architecture, functionality, design identity, and Persian-first experience.
+
+This is an audit and hardening task, NOT a request to rebuild the application.
+
+---
+
+# 1. NON-NEGOTIABLE RULES
+
+Follow these rules throughout the entire process:
+
+1. Do not rebuild the project from scratch.
+2. Do not replace the existing technology stack without a demonstrated technical necessity.
+3. Do not remove existing working modules or features.
+4. Do not overwrite existing business data.
+5. Do not reset, recreate, or delete the Firestore database.
+6. Do not introduce mock data as a replacement for real application data.
+7. Do not claim that a feature works unless you have verified its implementation.
+8. Do not claim that an integration is operational unless a real connection has been tested.
+9. Do not expose secrets, API keys, access tokens, or private configuration values in frontend code or logs.
+10. Do not deploy security rules or application changes to production without explicit authorization.
+11. Do not modify Firebase production data during testing.
+12. Preserve all existing routes, navigation, user workflows, and data structures unless a change is necessary and backward-compatible.
+13. Make small, controlled, reversible changes.
+14. Never weaken security rules to make a test pass.
+15. Never bypass backend authorization by relying on frontend visibility or disabled buttons.
+16. Never allow an AI agent to perform an external action without a valid, explicit owner approval.
+
+If a required configuration, credential, external service, or permission is unavailable, document the limitation. Never fabricate a successful test.
+
+---
+
+# 2. CURRENT PRODUCT CONTEXT
+
+The application is a Persian-first, all-in-one SaaS operating system for social media creators and small creator-led businesses.
+
+Its core principles are:
+
+- Persian-first user experience.
+- Native RTL architecture.
+- Multi-business data isolation.
+- AI-powered business operations.
+- Controlled AI autonomy.
+- Human approval for all consequential external actions.
+- Modular architecture.
+- Reliable and auditable business data.
+
+## Existing technology stack
+
+Preserve the current implementation wherever possible.
+
+Expected technologies include:
+
+- React
+- TypeScript
+- Node.js server runtime
+- Express or the existing server framework
+- Firebase Authentication
+- Cloud Firestore
+- Firebase Security Rules
+- Gemini API, called exclusively from the server
+- Existing frontend styling and component architecture
+
+Do not assume these technologies are implemented correctly merely because they appear in the project configuration. Inspect and verify them.
+
+## Existing product modules
+
+The application currently includes:
+
+1. Overview Dashboard
+2. AI Workforce
+3. AI Manager
+4. Content Studio
+5. Social Planner
+6. Media Library
+7. Audience & CRM
+8. Products
+9. Campaigns
+10. Analytics
+11. Automations
+12. Approval Center
+13. Business Memory
+14. Integrations
+15. Settings and Audit History
+
+The AI workforce consists of five agents and a central AI Manager.
+
+Preserve the existing agent responsibilities and workflows.
+
+---
+
+# 3. PERSIAN-FIRST AND RTL AUDIT
+
+This is a Persian-first SaaS product.
+
+Persian is the default application language and must remain the primary user experience.
+
+Inspect the entire application, including every route, modal, form, table, notification, dropdown, dashboard, chart, and empty state.
+
+Verify:
+
+- Persian is the default language.
+- RTL is correctly applied at the document and component levels.
+- English content can use LTR without breaking mixed-language layouts.
+- Vazirmatn is consistently used where appropriate.
+- Persian and Latin numbers are handled correctly.
+- Tabular numerical values remain aligned.
+- Jalali calendar dates are correct.
+- Date conversion does not introduce timezone errors.
+- Toman, Rial, and USD values are formatted consistently.
+- Iranian mobile numbers are validated correctly.
+- Mixed Persian/English text, URLs, numbers, and identifiers display correctly.
+- Text input, cursor positioning, selection, and copy/paste work correctly in RTL.
+- Charts and data visualizations remain understandable in RTL.
+- All user-facing errors and validation messages are available in Persian.
+
+Inspect the internationalization architecture.
+
+Requirements:
+
+- Keep translations centralized.
+- Do not hardcode user-facing strings throughout the application.
+- Preserve the existing fa/en language architecture.
+- Ensure that changing language does not break layout direction.
+- Ensure that all critical workflows work in Persian.
+
+Fix verified issues without redesigning the entire interface.
+
+---
+
+# 4. AUTHENTICATION AND AUTHORIZATION AUDIT
+
+Perform a complete Firebase Authentication and backend authorization audit.
+
+Verify:
+
+1. Google sign-in works correctly.
+2. Firebase ID tokens are validated server-side.
+3. Expired and invalid tokens are rejected.
+4. Every protected API endpoint requires authentication.
+5. The server obtains the authenticated user identity from a verified token, not from a client-supplied user ID.
+6. Users cannot access another user's private data.
+7. Users cannot access another business unless they have an explicitly authorized membership.
+8. Business ownership and membership roles are checked server-side.
+9. Privileged operations cannot be executed by changing frontend requests.
+10. Logout and session invalidation work as expected.
+11. Error responses do not expose sensitive authentication details.
+
+Inspect all API routes and identify:
+
+- Public routes.
+- Authenticated routes.
+- Business-scoped routes.
+- Owner-only routes.
+- Administrative routes.
+
+Create a clear authorization matrix.
+
+Fix missing or incorrect authorization checks.
+
+Do not introduce a new role system if the existing one already works. Extend it only when necessary.
+
+---
+
+# 5. FIRESTORE DATA ISOLATION AND SECURITY AUDIT
+
+This is one of the highest-priority areas.
+
+The application uses business-scoped data, with a structure similar to:
+
+businesses/{businessId}/...
+
+Inspect the actual database structure and determine the real security boundaries.
+
+Audit:
+
+- firestore.rules
+- Firestore collection structure
+- Subcollections
+- Server-side Firestore access
+- Client-side Firestore access
+- Business ownership
+- Business membership
+- Role-based access
+- Read permissions
+- Create permissions
+- Update permissions
+- Delete permissions
+
+Test the following scenarios using Firebase Emulator or another safe isolated test environment:
+
+### Scenario A — Authorized owner
+
+An authenticated business owner should access their own business data according to the intended permissions.
+
+### Scenario B — Unauthorized user
+
+A user who does not belong to a business must not read or modify its data.
+
+### Scenario C — Cross-business access
+
+A user belonging to Business A must not access Business B by changing businessId in the URL, request body, query string, or Firestore path.
+
+### Scenario D — Unauthorized role escalation
+
+A regular user must not grant themselves owner or administrator privileges.
+
+### Scenario E — Direct Firestore access
+
+Attempt unauthorized access directly through the Firestore client SDK, not only through application API routes.
+
+### Scenario F — Server-side authorization
+
+Verify that backend endpoints independently enforce business membership and permissions.
+
+Important:
+
+Firestore Security Rules do not automatically protect privileged server-side Admin SDK operations.
+
+Every server-side operation using privileged Firestore access must perform its own authorization checks.
+
+Never assume that deployed Firestore rules protect server-side code.
+
+### Security rules requirements
+
+- Apply least-privilege access.
+- Deny unauthorized access by default.
+- Validate document ownership and business membership.
+- Prevent unauthorized role changes.
+- Validate important fields and data types.
+- Protect sensitive documents.
+- Avoid unnecessarily broad wildcard permissions.
+- Ensure nested collections have appropriate rules.
+
+If rules are incorrect, prepare corrected rules and test them in an emulator first.
+
+Do not deploy them automatically.
+
+---
+
+# 6. GEMINI AND AI AGENT SECURITY AUDIT
+
+Inspect the complete Gemini integration.
+
+Verify:
+
+- Gemini API calls occur exclusively on the server.
+- API keys are never exposed in browser bundles.
+- API keys are never stored in Firestore.
+- Secrets are loaded from secure environment configuration.
+- Errors do not expose credentials.
+- User input is treated as untrusted input.
+- AI-generated output is validated before use.
+- Structured outputs follow explicit schemas.
+- Token usage and estimated costs are tracked accurately.
+- Requests have appropriate timeouts.
+- Retry behavior does not create duplicate tasks.
+- Rate limiting protects expensive AI endpoints.
+- Invalid or excessively large inputs are rejected.
+- AI responses cannot directly execute arbitrary server commands.
+
+Inspect how business context and Business Memory are assembled.
+
+Verify that:
+
+- An agent receives only the business data it is authorized to access.
+- Context from one business cannot leak into another business.
+- Sensitive information is not unnecessarily sent to Gemini.
+- AI-generated recommendations are distinguishable from verified business data.
+- AI outputs are not silently stored as verified facts.
+- Failed Gemini requests are handled gracefully.
+
+Inspect all five agents and the AI Manager.
+
+For each agent, document:
+
+- Purpose.
+- Input data.
+- Output format.
+- Permissions.
+- Available tools.
+- Allowed actions.
+- Restricted actions.
+- Approval requirements.
+- Error handling.
+
+---
+
+# 7. HUMAN APPROVAL AND EXTERNAL ACTION SAFETY
+
+This is a fundamental product requirement.
+
+The application follows a Controlled AI Autonomy model.
+
+AI agents can analyze, research, prepare, recommend, and create drafts.
+
+They cannot independently perform consequential external actions.
+
+Examples include:
+
+- Publishing social media content.
+- Sending messages to customers.
+- Sending emails.
+- Launching campaigns.
+- Spending advertising money.
+- Changing live product prices.
+- Creating external orders.
+- Triggering external integrations.
+- Making other consequential changes outside the internal application.
+
+Every such action requires explicit approval from the authorized business owner.
+
+## Approval integrity audit
+
+Inspect the existing Approval Center.
+
+Verify:
+
+1. Every approval request has a unique identifier.
+2. The request identifies the business, agent, action, target, and relevant parameters.
+3. The complete action payload is preserved.
+4. A cryptographic hash is calculated over a canonical representation of the approved payload.
+5. The hash algorithm and canonicalization are consistent.
+6. The approval is associated with the exact payload, not merely a task name.
+7. The approver is authorized to approve that action.
+8. The approval cannot be reused for another action.
+9. A modified payload invalidates the previous approval.
+10. Approval decisions are immutable or properly versioned.
+11. Duplicate approval submissions cannot cause duplicate external actions.
+12. Concurrent requests cannot bypass the approval state.
+13. Approval expiry and cancellation are handled safely.
+14. All approval decisions are recorded in the audit history.
+
+### Required approval lifecycle
+
+Use the existing lifecycle where possible, but ensure these logical states exist:
+
+- Pending
+- Approved
+- Rejected
+- Revision Requested
+- Cancelled
+- Expired
+- Executing
+- Executed
+- Execution Failed
+
+Do not allow an action to execute merely because a frontend component displays an Approved status.
+
+The backend must verify approval validity immediately before execution.
+
+### Critical execution rule
+
+An external action may execute only when:
+
+- The authenticated actor is authorized.
+- The business context is valid.
+- The approval belongs to the exact action.
+- The approved payload hash matches the execution payload.
+- The approval is still valid.
+- The action has not already been executed.
+- The integration is actually configured and operational.
+
+Use idempotency keys and safe execution records to prevent duplicate actions.
+
+If a real integration is not connected, the system must clearly show that execution is unavailable.
+
+Never simulate successful publishing or message delivery.
+
+---
+
+# 8. API AND BACKEND AUDIT
+
+Inspect every endpoint under:
+
+/api/v1
+
+Create a complete endpoint inventory.
+
+For each endpoint, document:
+
+- HTTP method.
+- Route.
+- Purpose.
+- Authentication requirement.
+- Business authorization requirement.
+- Input validation.
+- Output schema.
+- Error handling.
+- Rate limiting.
+- Side effects.
+- Idempotency requirements.
+
+Inspect:
+
+- Input validation.
+- Output validation.
+- HTTP status codes.
+- Error response consistency.
+- Pagination.
+- Filtering.
+- Sorting.
+- Rate limiting.
+- Request size limits.
+- CORS configuration.
+- Security headers.
+- Logging.
+- Timeouts.
+- Duplicate request handling.
+
+Fix:
+
+- Missing validation.
+- Inconsistent error handling.
+- Unprotected endpoints.
+- Unnecessary sensitive data exposure.
+- Unsafe database operations.
+- Duplicate side effects.
+- Incorrect business scoping.
+
+Do not change API contracts unnecessarily.
+
+When a breaking change is unavoidable, document it and provide a backward-compatible migration strategy.
+
+---
+
+# 9. FIRESTORE DATA INTEGRITY AND RELIABILITY
+
+Inspect the actual schemas and data access patterns.
+
+Verify:
+
+- Required fields.
+- Field types.
+- Unique identifiers.
+- Relationships.
+- Referential consistency.
+- Timestamps.
+- Server-generated timestamps where appropriate.
+- Business ownership.
+- Soft deletion where appropriate.
+- Duplicate prevention.
+- Concurrent updates.
+- Pagination.
+- Query indexes.
+
+Inspect all major entities:
+
+- Users
+- Businesses
+- Business Members
+- Agents
+- Tasks
+- Approvals
+- Content
+- Media Assets
+- Social Accounts
+- Contacts
+- Products
+- Orders
+- Campaigns
+- Automations
+- Automation Runs
+- Analytics Snapshots
+- Business Memory
+- Activity Logs
+
+Do not assume every entity is implemented in the same structure described in the original PRD.
+
+Use the actual schema as the source of truth.
+
+Check for:
+
+- Orphaned records.
+- Missing business IDs.
+- Incorrect ownership references.
+- Duplicate records.
+- Inconsistent statuses.
+- Missing timestamps.
+- Unbounded queries.
+- Unnecessary document reads.
+- Potential Firestore cost problems.
+
+Do not automatically delete or repair existing production records.
+
+Create a safe migration plan for any data correction.
+
+---
+
+# 10. BUSINESS BUILDER WIZARD AUDIT
+
+Inspect the seven-step Business Builder Wizard.
+
+Verify:
+
+- Users can resume an incomplete setup.
+- Progress is saved reliably.
+- Refreshing the page does not lose completed steps.
+- Data is associated with the correct business.
+- Required fields are validated.
+- AI-generated strategic summaries are clearly labeled.
+- AI-generated information is not treated as verified user input.
+- Business Memory is updated consistently.
+- Duplicate submissions do not create duplicate businesses.
+- Errors can be recovered without losing entered information.
+
+Test the complete onboarding process from registration to a fully configured business profile.
+
+---
+
+# 11. MODULE-BY-MODULE FUNCTIONAL AUDIT
+
+Inspect every existing module.
+
+Do not assume that a visually complete page is functionally complete.
+
+For each module, verify:
+
+- Data loading.
+- Data creation.
+- Data editing.
+- Data deletion where supported.
+- Business isolation.
+- Loading states.
+- Empty states.
+- Error states.
+- Input validation.
+- Responsive behavior.
+- Permission enforcement.
+- Audit logging where appropriate.
+
+Specific checks:
+
+### Overview Dashboard
+
+- Metrics must be based on real available data.
+- Missing integrations must not produce fabricated metrics.
+- Empty states must be meaningful.
+- Calculated values must be traceable to their source.
+
+### Content Studio
+
+- Generated drafts are saved correctly.
+- Content editing works.
+- Draft versions are preserved where appropriate.
+- Platform-specific outputs remain distinguishable.
+- AI-generated content is not automatically published.
+
+### Social Planner
+
+- Jalali dates are correct.
+- Calendar navigation works.
+- Timezone handling is consistent.
+- Content scheduling does not imply actual publishing unless publishing integration is connected.
+
+### Media Library
+
+- Upload validation.
+- File type restrictions.
+- File size restrictions.
+- Secure storage access.
+- Correct business ownership.
+- Safe deletion behavior.
+- Upload failure recovery.
+
+### CRM
+
+- Contact ownership.
+- Duplicate prevention.
+- Search and filtering.
+- Phone number validation.
+- Customer interaction history.
+- Data isolation.
+
+### Products
+
+- Correct currency handling.
+- Accurate price calculations.
+- Validation of product information.
+- Safe price changes.
+- No external price changes without owner approval.
+
+### Campaigns
+
+- Campaign state transitions.
+- Correct audience selection.
+- No actual external execution without approval.
+- No fabricated performance metrics.
+
+### Analytics
+
+- Clearly distinguish real, calculated, estimated, and AI-generated information.
+- Disconnected platforms must not display fabricated analytics.
+- Calculation formulas must be traceable.
+
+### Automations
+
+- Every automation has a clear trigger and execution policy.
+- Internal-only automation is separated from external actions.
+- External actions require valid approvals.
+- Repeated triggers do not cause duplicate executions.
+- Failed executions are recorded and recoverable.
+
+### Integrations
+
+- Show actual connection status.
+- Distinguish connected, disconnected, expired, and unavailable integrations.
+- Handle OAuth securely.
+- Never display fake connection success.
+
+### Settings and Audit History
+
+- Owner-only settings are protected.
+- Important changes are logged.
+- Sensitive information is not exposed.
+- Audit records cannot be modified by ordinary users.
+
+---
+
+# 12. PERFORMANCE AND COST AUDIT
+
+Inspect frontend and backend performance.
+
+Check:
+
+- Unnecessary React re-renders.
+- Large frontend bundles.
+- Unoptimized images.
+- Excessive Firestore reads.
+- Expensive Firestore queries.
+- Missing indexes.
+- N+1 query patterns.
+- Unbounded listeners.
+- Memory leaks.
+- Unnecessary Gemini requests.
+- Repeated AI context generation.
+- Excessive token consumption.
+
+Check whether:
+
+- Pagination is used for large lists.
+- Firestore listeners are unsubscribed correctly.
+- Loading indicators are used appropriately.
+- Large components are split logically.
+- Expensive operations are cached safely.
+- Gemini usage is tracked by business and task.
+
+Do not add caching that can expose one business's private data to another business.
+
+Do not optimize code at the expense of correctness or security.
+
+---
+
+# 13. LOGGING, MONITORING, AND AUDITABILITY
+
+Verify that the system can identify and investigate operational failures.
+
+Implement or improve structured logging where necessary.
+
+Logs should include useful metadata such as:
+
+- Timestamp.
+- Request ID.
+- Business ID.
+- Authenticated user ID where appropriate.
+- Endpoint.
+- Operation.
+- Status.
+- Error category.
+- Execution duration.
+
+Never log:
+
+- API keys.
+- Access tokens.
+- Passwords.
+- Private credentials.
+- Sensitive customer information unnecessarily.
+- Complete private AI prompts when they contain sensitive data.
+
+Verify that important events are recorded in Activity Logs.
+
+Important events include:
+
+- Authentication events.
+- Business configuration changes.
+- Agent task creation.
+- Approval requests.
+- Approval decisions.
+- External action execution.
+- Integration connection changes.
+- Product price changes.
+- Automation execution.
+- Permission changes.
+
+---
+
+# 14. TESTING STRATEGY
+
+Create and execute tests using the tools already available in the project.
+
+Prefer the existing testing framework. Add one only if necessary.
+
+Required testing categories:
+
+1. TypeScript checks.
+2. Production build.
+3. Unit tests.
+4. API integration tests.
+5. Authentication tests.
+6. Firestore Security Rules tests.
+7. Cross-business isolation tests.
+8. Approval workflow tests.
+9. Duplicate execution tests.
+10. AI response validation tests.
+11. Persian and RTL interface tests.
+12. End-to-end critical workflow tests.
+
+At minimum, verify these end-to-end scenarios:
+
+### Test A — New business onboarding
+
+A new user signs in, creates a business, completes the seven-step wizard, and saves the business profile.
+
+### Test B — Cross-business isolation
+
+Two users belonging to different businesses attempt to access each other's data.
+
+All unauthorized attempts must fail.
+
+### Test C — AI content generation
+
+An authorized user requests Persian content. The AI Manager delegates the task to the correct agent, receives a structured response, and saves the result as a draft.
+
+No content is published.
+
+### Test D — Approval lifecycle
+
+An agent creates an external action request.
+
+The owner approves it.
+
+The backend validates the exact payload and approval.
+
+The action is executed only if a real integration is configured.
+
+### Test E — Payload modification
+
+After approval, the payload is modified.
+
+The old approval must no longer authorize execution.
+
+### Test F — Duplicate execution
+
+The same approved action is submitted multiple times.
+
+The system must prevent duplicate external execution.
+
+### Test G — Disconnected integration
+
+An external integration is unavailable.
+
+The application must report the unavailable status honestly and must not simulate success.
+
+### Test H — Persian experience
+
+A user completes the main workflows in Persian with correct RTL, Jalali dates, and currency formatting.
+
+---
+
+# 15. IMPLEMENTATION STRATEGY
+
+Work in controlled phases.
+
+Do not immediately start changing files.
+
+## Phase 1 — Repository Discovery
+
+Inspect:
+
+- Project structure.
+- package.json.
+- Existing dependencies.
+- Frontend entry points.
+- Backend entry points.
+- API routes.
+- Firebase configuration.
+- Firestore rules.
+- Data access layer.
+- Gemini integration.
+- Existing tests.
+- Environment variable usage.
+
+Create an accurate architecture overview.
+
+Do not modify files in this phase.
+
+## Phase 2 — Baseline Verification
+
+Run:
+
+- npm run build
+- npx tsc --noEmit, if supported
+- Existing lint commands
+- Existing test commands
+
+Record the actual results.
+
+If a command is unavailable, report that instead of inventing a result.
+
+## Phase 3 — Audit Report
+
+Create a prioritized issue register.
+
+Use the following severity levels:
+
+- CRITICAL: Exploitable security vulnerability, cross-business data leakage, unauthorized external action, or serious data-loss risk.
+- HIGH: Major functionality failure, authorization weakness, incorrect approval validation, or severe reliability issue.
+- MEDIUM: Important usability, data integrity, performance, or maintainability issue.
+- LOW: Minor UI, accessibility, consistency, or optimization issue.
+
+For every finding include:
+
+- Unique issue ID.
+- Severity.
+- Affected module.
+- File and relevant code location.
+- Description.
+- Reproduction steps.
+- Potential impact.
+- Recommended fix.
+- Test required to verify the fix.
+
+Do not report speculative issues as confirmed vulnerabilities.
+
+Clearly distinguish:
+
+- Confirmed issue.
+- Potential risk.
+- Not verified.
+- Blocked by unavailable credentials or services.
+
+## Phase 4 — Controlled Remediation
+
+Fix issues in this order:
+
+1. Critical security issues.
+2. Business data isolation.
+3. Authentication and authorization.
+4. Approval and external action safety.
+5. Data integrity.
+6. API reliability.
+7. AI integration safety.
+8. Functional module issues.
+9. Performance.
+10. UI and accessibility.
+
+For each issue:
+
+- Explain the intended change.
+- Make the smallest safe modification.
+- Preserve existing behavior.
+- Add or update tests.
+- Run relevant tests.
+- Record the result.
+
+Do not combine unrelated large refactors.
+
+If a change requires a database migration, first document the migration plan and preserve backward compatibility.
+
+## Phase 5 — Final Verification
+
+After remediation, rerun:
+
+- Production build.
+- TypeScript checks.
+- Lint.
+- Unit tests.
+- Integration tests.
+- Security rules tests.
+- Critical workflow tests.
+
+Compare the results with the initial baseline.
+
+Identify any regressions.
+
+Do not claim full production readiness if important tests remain unexecuted.
+
+---
+
+# 16. PRODUCTION READINESS REPORT
+
+At completion, produce a detailed report in Persian.
+
+The report must include:
+
+## A. Executive Summary
+
+- Overall project status.
+- Main strengths.
+- Main remaining risks.
+- Whether the application is ready for internal testing, staging, or production.
+
+## B. Architecture Assessment
+
+- Actual frontend architecture.
+- Backend architecture.
+- Firebase architecture.
+- Gemini integration.
+- Data isolation model.
+
+## C. Security Assessment
+
+- Authentication.
+- Authorization.
+- Firestore rules.
+- Backend security.
+- Approval security.
+- Secrets management.
+- Remaining vulnerabilities.
+
+## D. Module Assessment
+
+Provide a table containing every product module and its verified status.
+
+Use only:
+
+- Verified.
+- Partially Verified.
+- Failed.
+- Not Tested.
+- Blocked.
+
+## E. Test Results
+
+For each test, report:
+
+- Command or test scenario.
+- Actual result.
+- Pass/fail.
+- Relevant evidence.
+
+## F. Issues Fixed
+
+List every actual code change.
+
+Include affected files and explain the reason.
+
+## G. Remaining Issues
+
+List unresolved issues with severity and recommended next steps.
+
+## H. Production Deployment Checklist
+
+Clearly separate:
+
+- Completed locally.
+- Tested in emulator.
+- Ready for staging.
+- Requires production credentials.
+- Requires explicit owner approval.
+- Not yet implemented.
+
+## I. Final Readiness Decision
+
+Choose exactly one:
+
+1. NOT READY — Critical issues remain.
+2. INTERNAL TESTING READY — Safe for controlled internal testing, but not public release.
+3. STAGING READY — Suitable for deployment to a staging environment.
+4. PRODUCTION CANDIDATE — No known critical blockers; final production validation and deployment authorization are still required.
+5. PRODUCTION READY — All required security, functionality, operational, and deployment checks have been successfully completed with evidence.
+
+Never select a higher readiness level than the actual test evidence supports.
+
+---
+
+# 17. IMPORTANT EXECUTION INSTRUCTIONS
+
+Start with Phase 1: Repository Discovery.
+
+Do not start with a redesign.
+
+Do not start by replacing files.
+
+Do not generate a new application.
+
+First understand the current application.
+
+Then perform the audit and present the findings.
+
+After documenting the findings, proceed with safe, non-destructive remediation wherever the existing environment permits it.
+
+If a critical change could affect production data or deployment, stop before applying that change and explain the required approval.
+
+Your priority is:
+
+**Security → Data Integrity → Correctness → Reliability → Performance → User Experience**
+
+The final outcome must be a more secure and reliable version of the existing MicroBusiness Autopilot – Creator Edition, not a different application.
+
+All final explanations and audit reports must be written in Persian.
+
+Keep the product Persian-first, RTL-native, and aligned with its original PRD.
